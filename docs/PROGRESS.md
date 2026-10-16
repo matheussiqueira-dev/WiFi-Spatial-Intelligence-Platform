@@ -25,9 +25,18 @@ PR #1 mesclado na `main` (`be66f40`). Trabalho em `feat/capability-enforcement`.
 Gate `check.ps1` exit 0: Ruff/format, 20 contratos, 253 backend, 6 launchers, Prettier,
 33 web, ESLint, tsc, build e 9 E2E Chromium (34,1 s), 1 skipped. Perfil `commercial-br`
 coberto por testes de API; não houve E2E de navegador nesse perfil.
-Pendente: reconstruir a demo Docker (Docker Desktop não iniciou nesta sessão — abrir pela
-interface); fixar imagens por digest; histórico de regras (migração); tipagem Python;
-NVDA/WebKit.
+Correção do E2E do PR #6 (`eb4e28a`): `pause` só reporta `paused` depois de
+`queue.join()` (antes o estado mudava com eventos ainda na fila, total 30→32); specs E2E
+aguardam o POST de pausa e o de recuperação para a sessão antes de começar. Teste de
+regressão `test_paused_state_is_reported_only_after_the_queue_is_drained`. Gate exit 0
+(254 backend, 9 E2E).
+
+Demo Docker reconstruída (`docker compose up --build --detach --wait`, sem `down -v`):
+volume `wifi-spatial_spatial-data` preservado (cópia prévia fora do repositório), Alembic
+em `0008`, 10.000 eventos mantidos, api/web healthy; health, status, catálogo (perfil
+`lab`, 7 capacidades ativas), eventos, sensores e rede 200 com token; `/docs` 404.
+Pendente: fixar imagens por digest; histórico de regras (migração); tipagem Python;
+NVDA/WebKit; E2E de navegador no perfil `commercial-br`.
 
 ## Claude Code: modularização do backend — 15/10/2026, 23:44–00:10
 
