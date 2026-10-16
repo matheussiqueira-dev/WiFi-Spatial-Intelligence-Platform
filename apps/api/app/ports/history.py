@@ -14,3 +14,7 @@ class HistorySelection:
 
 class HistoryRepository(Protocol):
     def read(self, selection: HistorySelection) -> list[dict]: ...
+
+    def read_page(
+        self, selection: HistorySelection, offset: int, limit: int
+    ) -> tuple[list[dict], int]: ...

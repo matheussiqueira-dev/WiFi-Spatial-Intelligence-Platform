@@ -1,16 +1,22 @@
 import { defineConfig, devices } from "@playwright/test";
+import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
-import { randomUUID } from "node:crypto";
 
 const root = path.resolve(__dirname, "../..");
 const token = "e2e-only-" + "x".repeat(40);
-const database = path
-  .join(os.tmpdir(), `spatial-e2e-${randomUUID()}.db`)
-  .replaceAll("\\", "/");
 const external = process.env.E2E_EXTERNAL === "1";
-const webPort = external ? Number(process.env.E2E_WEB_PORT ?? 3000) : 4310;
-const apiPort = external ? Number(process.env.E2E_API_PORT ?? 8000) : 4810;
+// One directory per run keeps database, logs and model-lab artifacts isolated.
+const runDirectory = external
+  ? ""
+  : fs.mkdtempSync(path.join(os.tmpdir(), "spatial-e2e-"));
+const database = path
+  .join(runDirectory, "spatial-e2e.db")
+  .replaceAll("\\", "/");
+const webPort = external ? Number(process.env.E2E_WEB_PORT) : 4310;
+if (!Number.isInteger(webPort) || webPort <= 0 || webPort === 3000)
+  throw new Error("External E2E requires E2E_WEB_PORT of an isolated stack.");
+const apiPort = 4810;
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: false,

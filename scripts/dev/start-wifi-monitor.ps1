@@ -1,4 +1,4 @@
-param([switch]$Background, [switch]$GatewayProbes, [ValidateRange(1024,65535)][int]$ApiPort=8000)
+param([switch]$Background, [switch]$GatewayProbes, [switch]$ChannelSurvey, [ValidateRange(1024,65535)][int]$ApiPort=8000)
 $ErrorActionPreference = 'Stop'
 $projectRoot = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
 Set-Location -LiteralPath $projectRoot
@@ -8,6 +8,7 @@ if (Test-Path runtime/wifi-monitor.lock) { throw 'Collector lock exists. Check i
 New-Item artifacts -ItemType Directory -Force | Out-Null
 $collectorArgs = @('scripts/network/collect_wifi.py','--api-url',"http://127.0.0.1:$ApiPort")
 if ($GatewayProbes) { $collectorArgs += '--gateway-probes' }
+if ($ChannelSurvey) { $collectorArgs += '--channel-survey' }
 if ($Background) {
     $process = Start-Process -FilePath $pythonPath -ArgumentList $collectorArgs -WorkingDirectory $projectRoot -WindowStyle Hidden -RedirectStandardOutput artifacts/wifi-monitor.stdout.log -RedirectStandardError artifacts/wifi-monitor.stderr.log -PassThru
     $deadline = (Get-Date).AddSeconds(10)

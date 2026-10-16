@@ -107,3 +107,68 @@ class NetworkReport(StrictModel):
     locations: list[str]
     comparisons: list[NetworkComparison]
     configured_location: str
+
+
+Band = Literal["2.4GHz", "5GHz", "6GHz"]
+
+
+class ChannelOccupancy(StrictModel):
+    """Aggregate of neighbouring access points on one channel; never an identifier."""
+
+    band: Band
+    channel: Annotated[int, Field(strict=True, ge=1, le=233)]
+    ap_count: Annotated[int, Field(strict=True, ge=1, le=500)]
+    strongest_signal_percent: Annotated[int, Field(strict=True, ge=0, le=100)]
+    utilization_percent: Annotated[int, Field(strict=True, ge=0, le=100)] | None = None
+
+
+class ChannelSurvey(StrictModel):
+    schema_version: Literal["1.0.0"] = "1.0.0"
+    data_class: Literal["HOST_NETWORK_TELEMETRY"] = "HOST_NETWORK_TELEMETRY"
+    evidence_level: Literal["L2_LIVE_UNVALIDATED"] = "L2_LIVE_UNVALIDATED"
+    source: Literal["windows-netsh-networks"] = "windows-netsh-networks"
+    survey_id: UUID
+    collector_id: UUID
+    timestamp: datetime
+    location: Location = "Computador"
+    channels: list[ChannelOccupancy] = Field(default_factory=list, max_length=64)
+    collector_error: Literal["read_failed", "unsupported_output"] | None = None
+
+    @model_validator(mode="after")
+    def coherent(self):
+        if self.timestamp.utcoffset() is None or self.timestamp.utcoffset().total_seconds() != 0:
+            raise ValueError("UTC timestamp required")
+        if len({(row.band, row.channel) for row in self.channels}) != len(self.channels):
+            raise ValueError("channel entries must be unique per band")
+        if self.collector_error and self.channels:
+            raise ValueError("failed survey cannot carry channels")
+        return self
+
+
+class ChannelScore(StrictModel):
+    channel: int
+    observed_ap_count: float
+    interference_score: float
+
+
+class BandPlan(StrictModel):
+    band: Band
+    observed: list[ChannelOccupancy]
+    candidates: list[ChannelScore]
+    current_channel: int | None
+    current_score: float | None
+    recommended_channel: int | None
+    advice: Literal["KEEP", "CONSIDER_CHANGE", "NO_CURRENT", "NOT_MODELED"]
+
+
+class ChannelPlan(StrictModel):
+    data_class: Literal["HOST_NETWORK_TELEMETRY"] = "HOST_NETWORK_TELEMETRY"
+    evidence_level: Literal["L2_LIVE_UNVALIDATED"] = "L2_LIVE_UNVALIDATED"
+    start: datetime
+    end: datetime
+    location: str | None
+    surveys: int
+    failed_surveys: int
+    last_survey_at: datetime | None
+    bands: list[BandPlan]
+    limitations: list[str]

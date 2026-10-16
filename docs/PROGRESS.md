@@ -1,5 +1,107 @@
 # Progresso da plataforma
 
+## Claude Code: modularização do backend — 15/10/2026, 23:44–00:10
+
+Feita após confirmação de que a sessão Codex estava parada (sem edições havia 10 min);
+snapshot prévio no scratchpad da sessão. Detalhes em ADR-011.
+
+- `main.py` de 530 para 115 linhas: composição apenas. Novo `bootstrap.py` (Container)
+  e routers em `app/api/` (simulação, analytics, model lab, automação, catálogo/
+  governança, stream). OpenAPI comparado antes/depois: 36 paths, operações e
+  componentes idênticos; WebSocket coberto pelos testes existentes.
+- `storage.py` de 452 linhas para fachada de 158 sobre `adapters/sqlite/` (database,
+  models, events, rules, reports, lab, audit). Interface pública e transação evento +
+  decisões preservadas.
+- Também: `Pipeline.quiesced()`, constantes de cenário/sala/sensores e limites de regras
+  no domínio, heartbeat WS sem descartar evento, `/system/status` no event loop,
+  `/features` lista analytics/replay/model lab/automação como IMPLEMENTED_SYNTHETIC.
+- Testes novos (`test_catalog_routes.py`, 6): providers com/sem legado, features, ciclo
+  start→reset→start auditado, constantes × contrato × rotas e main sem rotas em closure.
+
+Gate `check.ps1` exit 0: Ruff/format, 20 contratos sincronizados, 217 backend,
+6 launchers, Prettier, 32 web, ESLint, TypeScript, build e 9 E2E Chromium (39,4 s),
+1 skipped. Sem commit/push.
+
+## Claude Code: pendências da auditoria e CI gratuito — 15/10/2026, 22:15–22:58
+
+Executado em paralelo à sessão Codex abaixo (mesma árvore). Reverificação dos 70
+achados abertos da auditoria por três agentes somente leitura; correções com Red→Green:
+
+- **Storage/analytics (P2):** janela temporal usa o índice de timestamp (pré-filtro
+  lexical ±1 s + UDF exata, ADR-003 preservado); retenção sem OFFSET, só sobre
+  L0_SYNTHETIC; replay paginado no SQL (`count(*)` + página); run/relatório e
+  auditoria na mesma transação; payload armazenado inválido é excluído e declarado
+  em `limitations`, sem HTTP 500. Medido com 100 mil linhas: janela de 1 min 256→1,2 ms,
+  página de replay 261→7 ms, fronteira de retenção 62→5 ms.
+- **Runtime:** `RecursionError` de frame RuView rejeitado; falha inesperada do provedor
+  para a sessão sem matar a tarefa de ingestão.
+- **Frontend:** WS com deps `[token]` (paginar não reconecta); paginação de analytics
+  usa a consulta aplicada (fim fixo) sem refazer replay; replay detecta mudança de
+  total durante a carga; null nunca vira barra zero; borda de campos 3,34:1; `lang="en"`
+  em textos da API; foco ao entrar/sair/fechar aviso; Sair zera a sessão; marca não
+  recarrega a página; carga inicial e estados vazios no Model Lab/Automação; live
+  regions sempre montadas; painéis memoizados; axe com `wcag22aa`.
+- **Scripts/testes:** guarda E2E externa real (`e2e/target.ts`: projeto isolado, token e
+  porta explícitos, porta conferida no Docker); `docker-e2e.ps1` com projeto e volume
+  descartáveis por execução; conftest isola `SPATIAL_*`; `Get-ProjectPython` robusto no
+  PS 5.1 (reproduzido e corrigido); `finally` restaura variáveis antes do shutdown;
+  credenciais RuView sem `python -c`; smoke scripts sem proxy; Compose repassa backup e
+  rate limit; `.dockerignore` com `**/runtime`; Playwright com diretório temporário por
+  execução; gate de Prettier (`format:check`) e teste Alembic × ORM (`compare_metadata`).
+- **CI gratuito:** `.github/workflows/ci.yml` (backend 3.12/3.13, web, E2E Chromium,
+  Gitleaks pinado por checksum, npm audit), `.github/dependabot.yml` e
+  `.pre-commit-config.yaml` opcional; actions pinadas por SHA de releases com ≥2 semanas.
+
+Gate `check.ps1` (22:40) exit 0: 200 backend, 6 launchers, 30 web, Prettier, contratos,
+build e 9 E2E. Jobs da CI reexecutados em contêineres Linux: backend 3.12 e 3.13 (211 +
+6 testes, pip-audit sem vulnerabilidades), web (lint, tipos, 30 testes, build), E2E (9
+pass, 1 skip). Gitleaks e pre-commit não executados localmente (exigiriam baixar
+ferramentas); rodam no GitHub quando houver push. Nenhum commit/push nesta etapa.
+
+Modularizar `main.py` em routers e `Store` em repositórios foi adiado nesta etapa para
+não colidir com a sessão Codex; concluído depois (entrada acima, ADR-011).
+Também pendentes P3 estruturais: hierarquia de exceções, `Pipeline.quiesced()`,
+catálogo de constantes, porta `SourceProvider`, `/features` coerente, docs opt-in.
+
+## Plano v4, catálogo de capacidades e análise de canais — 15/10/2026, ~22:20–23:10
+
+Decisão do proprietário: construir todas as capacidades com funcionalidade e recortar
+depois por mercado/regulação. Registrada como seção 0A do plano mestre (agora v4.0;
+seções v3 seguem vigentes) e resumida em CLAUDE.md.
+
+- **Catálogo** `apps/api/app/capabilities.py` + `GET /api/v1/capabilities`
+  (autenticado): 12 capacidades em grupos A–D com status, evidência máxima, etiquetas
+  `LGPD_PERSONAL/LGPD_SENSITIVE/ANATEL_RADIO/ANVISA_SAMD`, hardware/consentimento e
+  perfis. `SPATIAL_CAPABILITY_PROFILE` (`lab` padrão, `commercial-br`). Perfil
+  comercial nunca liga ANVISA, grupo D, PLANNED ou BLOCKED (teste). Hoje o catálogo
+  é informativo: os endpoints existentes ainda **não** são bloqueados pelo perfil.
+- **Grupo A — ocupação de canais**: parser `parse_networks` (pt/en) da lista passiva
+  `netsh wlan show networks mode=bssid`, agregação por canal no host (SSID/BSSID
+  descartados), contrato `ChannelSurvey`, tabela `channel_surveys` (migração 0008),
+  `POST /api/v1/network/channel-surveys`, `GET /api/v1/network/channel-plan` com
+  heurística de interferência (sobreposição 2,4 GHz, bloco 80 MHz em 5 GHz, desconto
+  do próprio AP, margem 0,5, 6 GHz só listado). Coletor `--channel-survey`
+  (`-ChannelSurvey` no script), a cada 60 s.
+- **UI**: seção "Ocupação de canais" no painel Wi-Fi e painel "Capacidades e
+  enquadramento" no dashboard. Contratos exportados (20 arquivos), Zod sincronizado.
+- **Testes**: `test_channel_plan.py` (11 casos: parser sem vazamento de identificadores,
+  agregação, contrato, recomendações, janela, API autenticada/idempotente, perfis),
+  `tests/capabilities.test.ts` (2), `e2e/network.spec.ts` estendido (recomendação,
+  catálogo, axe em `#capabilities`).
+- **Teste real (L2)**: API isolada na porta 8765 com banco temporário; coletor
+  `--once --channel-survey` neste host entregou amostra e varredura; plano: 5 GHz
+  KEEP no canal 149; 2,4 GHz canal 1 mais ocupado (provavelmente o rádio 2,4 GHz do
+  próprio roteador — limitação documentada). Stack Docker em 8000 não foi
+  reconstruída; ela ainda roda o código anterior, sem a migração 0008.
+
+Gate `check.ps1` exit 0: Ruff/format, contratos sincronizados (20), 211 backend, 6 launchers,
+32 web, ESLint, TypeScript, Prettier, build e 9 E2E Chromium passaram, 1 skipped
+(RuView), 43,4 s. WinError 10054 no fechamento forçado reapareceu, sem falha.
+
+Pendências: aplicar o perfil como bloqueio real dos endpoints; reconstruir a stack
+Docker para aplicar 0008; próximos itens do grupo A (mapa por ponto com planta,
+alertas de degradação, inventário da própria rede); hardware CSI para grupos B/C.
+
 ## Continuidade Claude Code: revisão Codex e auditoria — 15/10/2026, 20:54–21:03 Fortaleza
 
 Revisadas as entregas Codex de 18:32–20:46 (correções, avatares articulados,

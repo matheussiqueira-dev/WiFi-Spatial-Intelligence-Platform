@@ -1,4 +1,6 @@
-"""Read the current Windows link only. No scan, profiles, SSID, BSSID or traffic export."""
+"""Read the current Windows link and, opt-in, per-channel aggregates of visible networks.
+
+No profiles, SSID, BSSID or traffic export."""
 
 import ipaddress
 import json
@@ -147,3 +149,78 @@ def probe_gateway() -> dict:
         return {"probe_status": "COMPLETED", "probe_sent": 3, "probe_rtt_ms": replies}
     except (OSError, subprocess.TimeoutExpired, ValueError, TypeError):
         return failed
+
+
+def parse_networks(text: str) -> list[dict] | None:
+    """Per-BSSID band/channel/signal/load from `netsh wlan show networks mode=bssid`.
+
+    SSID, BSSID, authentication and rates are never returned: only radio aggregates.
+    Returns None when the output is not recognised.
+    """
+    if not re.search(r"(?im)^\s*ssid\s+\d+\s*:", text):
+        return [] if re.search(r"(?im)\b0\b.*(?:redes|networks)", text) else None
+    readings = []
+    for block in re.split(r"(?im)^\s*bssid\s+\d+\s*:[^\r\n]*", text)[1:]:
+        block = re.split(r"(?im)^\s*ssid\s+\d+\s*:", block)[0]
+        values = {
+            normalized(key): value.strip()
+            for key, value in re.findall(r"(?m)^\s*([^:\n]+):\s*([^\r\n]*)", block)
+        }
+        signal = re.fullmatch(r"(\d{1,3})\s*%", values.get("sinal", values.get("signal", "")))
+        channel = re.fullmatch(r"\d{1,3}", values.get("canal", values.get("channel", "")))
+        if not signal or not channel or not 0 <= int(signal[1]) <= 100:
+            continue
+        number = int(channel[0])
+        band_text = values.get("banda", values.get("band", "")).replace(",", ".")
+        band = (
+            "2.4GHz"
+            if band_text.startswith("2.4")
+            else "5GHz"
+            if band_text.startswith("5")
+            else "6GHz"
+            if band_text.startswith("6")
+            else "2.4GHz"
+            if number <= 14
+            else "5GHz"
+        )
+        load = re.search(
+            r"\((\d{1,3})\s*%\)",
+            values.get("utilizacao do canal", values.get("channel utilization", "")),
+        )
+        if not 1 <= number <= 233:
+            continue
+        readings.append(
+            {
+                "band": band,
+                "channel": number,
+                "signal_percent": int(signal[1]),
+                "utilization_percent": int(load[1]) if load and int(load[1]) <= 100 else None,
+            }
+        )
+    return readings
+
+
+def read_channel_survey() -> dict:
+    """Passive: reads the list Windows already scanned; does not trigger a scan or connect."""
+    from app.application.channel_plan import aggregate
+
+    if sys.platform != "win32":
+        return {"collector_error": "read_failed"}
+    try:
+        completed = subprocess.run(
+            ["netsh.exe", "wlan", "show", "networks", "mode=bssid"],
+            capture_output=True,
+            timeout=8,
+        )
+        if completed.returncode:
+            return {"collector_error": "read_failed"}
+        try:
+            text = completed.stdout[:262144].decode("utf-8-sig")
+        except UnicodeDecodeError:
+            text = completed.stdout[:262144].decode("oem", errors="replace")
+    except (OSError, subprocess.TimeoutExpired):
+        return {"collector_error": "read_failed"}
+    readings = parse_networks(text)
+    if readings is None:
+        return {"collector_error": "unsupported_output"}
+    return {"channels": aggregate(readings)}

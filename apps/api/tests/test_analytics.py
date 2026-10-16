@@ -197,8 +197,11 @@ def test_equal_timestamps_use_event_id_tie_break_and_invalid_evidence():
     ]
     assert [event.provenance.tick for event, _ in ordered(data)] == [0, 1, 2]
     data[0]["event"]["evidence_level"] = "L3_VALIDATED"
-    with pytest.raises(ValueError):
-        aggregate(data, query())
+    # A forged evidence level is never counted; it is excluded and reported explicitly.
+    result = aggregate(data, query())
+    assert result["summary"]["samples"] == 2
+    assert result["evidence_level"] == "L0_SYNTHETIC"
+    assert any("1 stored record(s) failed" in item for item in result["limitations"])
 
 
 def test_sqlite_backup_restore_integrity_and_guarded_retention(client, settings, tmp_path):

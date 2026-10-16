@@ -40,9 +40,12 @@ def test_job_api_completion_and_restart_status(client):
     identifier = response.json()["id"]
     deadline = time.monotonic() + 3
     while time.monotonic() < deadline:
-        job = client.get(f"/api/v1/model-lab/jobs/{identifier}").json()
+        response = client.get(f"/api/v1/model-lab/jobs/{identifier}")
+        assert response.status_code == 200, response.text
+        job = response.json()
         if job["state"] == "completed":
             break
+        time.sleep(0.02)
     assert job["progress"] == 100 and job["run_id"]
     assert client.get(f"/api/v1/model-lab/runs/{job['run_id']}").status_code == 200
     assert client.post(f"/api/v1/model-lab/jobs/{identifier}/cancel").status_code == 409

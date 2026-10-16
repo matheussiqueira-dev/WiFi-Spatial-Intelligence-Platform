@@ -1,15 +1,11 @@
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
+import { e2eTarget } from "./target";
 
 test("model lab: train, persist, export and reopen synthetic evaluation", async ({
   page,
 }) => {
-  if (
-    process.env.E2E_EXTERNAL === "1" &&
-    process.env.E2E_COMPOSE_PROJECT !== "wifi-spatial-native-e2e"
-  )
-    throw new Error("Requires isolated native stack");
-  const token = process.env.E2E_TOKEN ?? "e2e-only-" + "x".repeat(40);
+  const { token } = e2eTarget();
   async function connect() {
     await page.goto("/dashboard");
     await page.getByLabel("Token de acesso local").fill(token);
@@ -19,7 +15,10 @@ test("model lab: train, persist, export and reopen synthetic evaluation", async 
   await page
     .getByRole("button", { name: "Treinar e avaliar baseline" })
     .click();
-  const result = page.getByLabel("Resultado do experimento", { exact: true });
+  const result = page.getByRole("region", {
+    name: "Resultado do experimento",
+    exact: true,
+  });
   await expect(result).toContainText("L0_SYNTHETIC");
   await expect(result).toContainText("32 janelas de teste");
   const before = await result.innerText();
@@ -35,7 +34,9 @@ test("model lab: train, persist, export and reopen synthetic evaluation", async 
     .first()
     .click();
   await expect(result).toHaveText(before, { useInnerText: true });
-  await page.getByRole("button", { name: "Enfileirar baseline", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Enfileirar baseline", exact: true })
+    .click();
   await expect(page.getByLabel("Estado do job")).toContainText("completed");
   await expect(result).toContainText("L0_SYNTHETIC");
   await page.setViewportSize({ width: 320, height: 844 });
@@ -47,7 +48,7 @@ test("model lab: train, persist, export and reopen synthetic evaluation", async 
   expect(
     (
       await new AxeBuilder({ page })
-        .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+        .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
         .analyze()
     ).violations,
   ).toEqual([]);

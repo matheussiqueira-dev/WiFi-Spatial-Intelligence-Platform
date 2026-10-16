@@ -3,6 +3,21 @@
 import random
 from dataclasses import dataclass
 
+# Single source for the virtual laboratory; contracts and routes are checked against it.
+SCENARIOS = (
+    "empty",
+    "stationary",
+    "walking",
+    "entering",
+    "leaving",
+    "interference",
+    "packet_loss",
+    "disconnect",
+)
+ROOM_WIDTH_M = 8
+ROOM_HEIGHT_M = 6
+VIRTUAL_SENSOR_POSITIONS = ((0, 0), (4, 0), (8, 0), (0, 6), (4, 6), (8, 6))
+
 
 @dataclass(frozen=True)
 class MeasurementFrame:
@@ -21,16 +36,7 @@ class SyntheticScene:
     def __post_init__(self):
         if not 0 <= self.seed < 2**32 or not 0 <= self.occupants <= 20:
             raise ValueError("invalid synthetic scene bounds")
-        if self.scenario not in {
-            "empty",
-            "stationary",
-            "walking",
-            "entering",
-            "leaving",
-            "interference",
-            "packet_loss",
-            "disconnect",
-        }:
+        if self.scenario not in SCENARIOS:
             raise ValueError("unsupported scene")
 
     def sample(self, tick: int) -> MeasurementFrame | None:

@@ -12,6 +12,7 @@ sys.path.insert(0, str(root / "apps/api"))
 from app.adapters.native import NativeProvider
 from app.analytics import AnalyticsQuery, aggregate, replay
 from app.application.model_lab import ExperimentRequest
+from app.capabilities import CapabilityCatalog, catalog
 from app.contracts import (
     Event,
     NativeEvent,
@@ -23,7 +24,12 @@ from app.contracts import (
 )
 from app.domain.motion import evaluate_baseline, prepare_dataset
 from app.lab_contracts import ExperimentResult
-from app.network_contracts import NetworkReport, NetworkSample
+from app.network_contracts import (
+    ChannelPlan,
+    ChannelSurvey,
+    NetworkReport,
+    NetworkSample,
+)
 from app.simulator import SimulationProvider
 from pydantic import TypeAdapter
 
@@ -107,6 +113,10 @@ def render():
         "experiment-result.example.json": dump(experiment),
         "network-sample.schema.json": dump(NetworkSample.model_json_schema()),
         "network-report.schema.json": dump(NetworkReport.model_json_schema()),
+        "channel-survey.schema.json": dump(ChannelSurvey.model_json_schema()),
+        "channel-plan.schema.json": dump(ChannelPlan.model_json_schema()),
+        "capability-catalog.schema.json": dump(CapabilityCatalog.model_json_schema()),
+        "capability-catalog.example.json": dump(catalog("lab").model_dump(mode="json")),
     }
 
 

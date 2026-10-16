@@ -141,6 +141,8 @@
   --blue: #195f95;
   --paper: #f3f6f9;
   --green: #127864;
+  /* 3.34:1 on white and 3.08:1 on --paper (WCAG 1.4.11 non-text contrast). */
+  --field-border: #7a8fa3;
 }
 * {
   box-sizing: border-box;
@@ -184,7 +186,7 @@ button:disabled {
 button.secondary {
   background: white;
   color: var(--ink);
-  border-color: #a7bacb;
+  border-color: var(--field-border);
 }
 button.text-button {
   background: transparent;
@@ -196,7 +198,7 @@ input,
 select {
   width: 100%;
   padding: 10px 12px;
-  border: 1px solid #a7bacb;
+  border: 1px solid var(--field-border);
   border-radius: 6px;
   color: var(--ink);
   background: white;
@@ -845,6 +847,18 @@ code {
   flex: 1;
   min-width: 1px;
 }
+/* Mounted-but-empty live regions keep their place in the accessibility tree. */
+.live:empty {
+  margin: 0;
+}
+.analytics-chart > .bar-unknown {
+  background: repeating-linear-gradient(
+    135deg,
+    transparent 0 4px,
+    rgb(86 110 130 / 35%) 4px 6px
+  );
+  border: 1px dashed var(--muted);
+}
 .analytics h3 {
   margin-top: 24px;
 }
@@ -905,4 +919,31 @@ code {
   .scene-explanation {
     padding: 8px 16px 16px;
   }
+}
+
+.channel-plan {
+  margin-top: 20px;
+  border-top: 1px solid #dbe4ec;
+  padding-top: 12px;
+}
+.channel-plan h3 {
+  margin: 0 0 8px;
+}
+.channel-band h4 {
+  margin: 14px 0 4px;
+}
+.channel-plan tr[aria-current="true"] td {
+  font-weight: 600;
+}
+.capabilities-panel {
+  padding: 24px;
+  margin-top: 24px;
+}
+.capabilities-panel .panel-heading {
+  padding: 0 0 14px;
+}
+.capability-note {
+  display: block;
+  color: #566e82;
+  font-size: 12px;
 }

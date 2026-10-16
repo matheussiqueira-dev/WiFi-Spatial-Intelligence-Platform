@@ -1,17 +1,12 @@
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
+import { e2eTarget } from "./target";
 
 test("analytics: persisted aggregates, replay, export and saved report", async ({
   page,
   request,
 }) => {
-  const external = process.env.E2E_EXTERNAL === "1";
-  if (external && process.env.E2E_COMPOSE_PROJECT !== "wifi-spatial-native-e2e")
-    throw new Error(
-      "Analytics external E2E requires its isolated native stack.",
-    );
-  const token = process.env.E2E_TOKEN ?? "e2e-only-" + "x".repeat(40);
-  const base = `http://127.0.0.1:${external ? Number(process.env.E2E_API_PORT ?? 8000) : 4810}/api/v1`;
+  const { token, apiBase: base } = e2eTarget();
   const headers = { Authorization: `Bearer ${token}` };
   await request.post(`${base}/simulation/stop`, { headers });
   await request.post(`${base}/sources/select`, {
@@ -97,7 +92,7 @@ test("analytics: persisted aggregates, replay, export and saved report", async (
   expect(
     (
       await new AxeBuilder({ page })
-        .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+        .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
         .analyze()
     ).violations,
   ).toEqual([]);
@@ -122,7 +117,7 @@ test("analytics: persisted aggregates, replay, export and saved report", async (
   expect(
     (
       await new AxeBuilder({ page })
-        .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+        .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
         .analyze()
     ).violations,
   ).toEqual([]);

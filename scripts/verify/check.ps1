@@ -16,6 +16,8 @@ Assert-Exit 'Backend tests'
 Assert-Exit 'Launcher integration tests'
 npm.cmd run lint
 Assert-Exit 'Frontend lint'
+npm.cmd run format:check
+Assert-Exit 'Frontend formatting'
 npm.cmd run typecheck
 Assert-Exit 'TypeScript'
 npm.cmd run test:web
@@ -43,13 +45,14 @@ if (-not $SkipE2E) {
         npm.cmd run test:e2e
         Assert-Exit 'End-to-end tests'
     } finally {
-        if ($ruviewStarted) {
-            docker compose --env-file artifacts/ruview-verification.env -f compose.ruview.yaml -p wifi-spatial-f2-verification down
-            Assert-Exit 'Verification RuView shutdown'
-        }
+        # Restore first so a failing shutdown neither leaks the credential nor masks errors.
         $env:E2E_RUVIEW = $previousRuViewFlag
         $env:SPATIAL_RUVIEW_TOKEN = $previousRuViewToken
         $env:E2E_RUVIEW_HTTP_URL = $previousRuViewHttp
         $env:E2E_RUVIEW_WS_URL = $previousRuViewWs
+        if ($ruviewStarted) {
+            docker compose --env-file artifacts/ruview-verification.env -f compose.ruview.yaml -p wifi-spatial-f2-verification down
+            if ($LASTEXITCODE -ne 0) { Write-Warning "Verification RuView shutdown failed (exit $LASTEXITCODE)." }
+        }
     }
 }

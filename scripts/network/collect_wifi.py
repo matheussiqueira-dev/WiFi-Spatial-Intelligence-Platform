@@ -15,9 +15,9 @@ from uuid import uuid4
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "apps/api"))
-from app.adapters.windows_wifi import probe_gateway, read_link
+from app.adapters.windows_wifi import probe_gateway, read_channel_survey, read_link
 from app.config import Settings
-from app.network_contracts import NetworkConfiguration, NetworkSample
+from app.network_contracts import ChannelSurvey, NetworkConfiguration, NetworkSample
 
 
 class NoRedirect(HTTPRedirectHandler):
@@ -46,6 +46,11 @@ def main() -> int:
     parser.add_argument("--api-url", default="http://127.0.0.1:8000")
     parser.add_argument("--interval", type=int, choices=range(15, 61), default=15)
     parser.add_argument("--gateway-probes", action="store_true")
+    parser.add_argument(
+        "--channel-survey",
+        action="store_true",
+        help="every 60 s, send per-channel aggregates of networks Windows already listed",
+    )
     parser.add_argument("--once", action="store_true")
     args = parser.parse_args()
     if sys.platform != "win32":
@@ -72,6 +77,7 @@ def main() -> int:
             return 1
     failures = 0
     delivered = 0
+    surveyed_at = float("-inf")
     unavailable = False
     try:
         while args.once or not stop.exists():
@@ -112,6 +118,26 @@ def main() -> int:
                     json.loads(response.read(1024))
                 delivered += 1
                 unavailable = False
+                if args.channel_survey and time.monotonic() - surveyed_at >= 60:
+                    surveyed_at = time.monotonic()
+                    survey = ChannelSurvey(
+                        survey_id=uuid4(),
+                        collector_id=session_id,
+                        timestamp=datetime.now(UTC),
+                        location=config.location,
+                        **read_channel_survey(),
+                    )
+                    survey_request = Request(
+                        endpoint + "/api/v1/network/channel-surveys",
+                        data=survey.model_dump_json().encode(),
+                        headers={
+                            "Authorization": "Bearer " + token,
+                            "Content-Type": "application/json",
+                        },
+                        method="POST",
+                    )
+                    with opener.open(survey_request, timeout=5) as response:
+                        json.loads(response.read(1024))
                 if args.once:
                     print(
                         json.dumps(
@@ -121,6 +147,7 @@ def main() -> int:
                                 "signal_percent": sample.signal_percent,
                                 "probe_sent": sample.probe_sent,
                                 "probe_replies": len(sample.probe_rtt_ms),
+                                "channel_survey": args.channel_survey,
                             }
                         )
                     )

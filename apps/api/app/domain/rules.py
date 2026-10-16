@@ -2,6 +2,10 @@
 
 from dataclasses import dataclass
 
+# Explicit capacity: full storage stops new records, it never deletes history (ADR-007).
+MAX_RULES = 20
+MAX_DECISIONS = 1000
+
 
 @dataclass(frozen=True)
 class RuleSpec:

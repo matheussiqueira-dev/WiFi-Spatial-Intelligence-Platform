@@ -1,15 +1,12 @@
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
+import { e2eTarget } from "./target";
 
 test("avatars: human and pet structures preserve occupancy, pause and mobile access", async ({
   page,
   request,
 }) => {
-  const external = process.env.E2E_EXTERNAL === "1";
-  if (external && process.env.E2E_COMPOSE_PROJECT !== "wifi-spatial-native-e2e")
-    throw new Error("Avatar checks require the isolated verification stack");
-  const token = process.env.E2E_TOKEN ?? "e2e-only-" + "x".repeat(40);
-  const base = `http://127.0.0.1:${external ? Number(process.env.E2E_API_PORT ?? 8000) : 4810}/api/v1`;
+  const { token, apiBase: base } = e2eTarget();
   const headers = { Authorization: `Bearer ${token}` };
   await request.post(`${base}/simulation/stop`, { headers });
   await page.goto("/dashboard");
@@ -68,7 +65,7 @@ test("avatars: human and pet structures preserve occupancy, pause and mobile acc
   expect(
     (
       await new AxeBuilder({ page })
-        .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+        .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
         .analyze()
     ).violations,
   ).toEqual([]);

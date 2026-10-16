@@ -15,7 +15,11 @@ import {
   statusMessage,
   streamCloseOutcome,
 } from "../src/lib/api";
-import { eventSchema, type SensingEvent, type Status } from "../src/lib/contracts";
+import {
+  eventSchema,
+  type SensingEvent,
+  type Status,
+} from "../src/lib/contracts";
 
 const realFetch = globalThis.fetch;
 afterEach(() => {
@@ -97,7 +101,10 @@ test("request exposes typed errors and never leaks raw body parse failures", asy
     return true;
   });
   respond("a,b\n", { status: 422 });
-  await assert.rejects(requestText("/analytics/export.csv", "t"), /parâmetros/i);
+  await assert.rejects(
+    requestText("/analytics/export.csv", "t"),
+    /parâmetros/i,
+  );
   respond("a,b\n", { status: 200 });
   assert.equal(await requestText("/analytics/export.csv", "t"), "a,b\n");
 });
@@ -131,11 +138,19 @@ test("only the stale sync warning is dismissed when the API recovers", () => {
 });
 
 test("simulation controls validate the form only when starting the native engine", () => {
-  const invalid = { scenario: "walking", seed: 42, occupants: 25, speed: 1 } as const;
+  const invalid = {
+    scenario: "walking",
+    seed: 42,
+    occupants: 25,
+    speed: 1,
+  } as const;
   for (const action of ["pause", "resume", "stop", "reset"] as const)
     assert.equal(controlBody(action, "synthetic-native", invalid), undefined);
   assert.equal(controlBody("start", "RUVIEW_STREAM", invalid), "{}");
-  assert.throws(() => controlBody("start", "synthetic-native", invalid), z.ZodError);
+  assert.throws(
+    () => controlBody("start", "synthetic-native", invalid),
+    z.ZodError,
+  );
   assert.deepEqual(
     JSON.parse(
       controlBody("start", "synthetic-native", { ...invalid, occupants: 3 }) ??

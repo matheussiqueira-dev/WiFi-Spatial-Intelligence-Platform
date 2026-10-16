@@ -7,3 +7,6 @@ class ReadHistory:
 
     def execute(self, selection: HistorySelection) -> list[dict]:
         return self.repository.read(selection)
+
+    def page(self, selection: HistorySelection, offset: int, limit: int):
+        return self.repository.read_page(selection, offset, limit)

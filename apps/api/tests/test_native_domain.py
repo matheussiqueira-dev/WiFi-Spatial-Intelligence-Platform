@@ -73,9 +73,13 @@ def test_legacy_is_off_by_default(client):
     assert client.get("/api/v1/system/status").json()["provider"] == "synthetic-native"
 
 
-def test_default_startup_does_not_import_legacy_engine():
+def test_default_startup_does_not_import_legacy_engine(tmp_path):
+    import os
     import subprocess
     import sys
+
+    environment = {k: v for k, v in os.environ.items() if not k.startswith("SPATIAL_")}
+    database = (tmp_path / "startup.db").as_posix()
 
     result = subprocess.run(
         [
@@ -83,12 +87,14 @@ def test_default_startup_does_not_import_legacy_engine():
             "-c",
             (
                 "from app.main import create_app; from app.config import Settings; import sys; "
-                "app=create_app(Settings(token='test-only-'+'x'*40, _env_file=None)); "
+                "app=create_app(Settings(token='test-only-'+'x'*40, _env_file=None, "
+                f"database_url='sqlite:///{database}')); "
                 "assert 'app.ruview' not in sys.modules; "
                 "assert app.state.pipeline.source == 'synthetic-native'"
             ),
         ],
         cwd=Path(__file__).parents[1],
+        env=environment,
         capture_output=True,
         text=True,
     )

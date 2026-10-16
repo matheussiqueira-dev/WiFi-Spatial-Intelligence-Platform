@@ -5,7 +5,7 @@ from sqlalchemy import Engine, String, Text, func, select
 from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.orm import Mapped, mapped_column, sessionmaker
 
-from app.network_contracts import NetworkSample
+from app.network_contracts import ChannelSurvey, NetworkSample
 from app.storage import Base
 
 
@@ -23,10 +23,19 @@ class NetworkConfigurationRow(Base):
     location: Mapped[str] = mapped_column(String(48))
 
 
+class ChannelSurveyRow(Base):
+    __tablename__ = "channel_surveys"
+    survey_id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    timestamp: Mapped[str] = mapped_column(String(40), index=True)
+    location: Mapped[str] = mapped_column(String(48), index=True)
+    payload: Mapped[str] = mapped_column(Text)
+
+
 class NetworkStore:
-    def __init__(self, engine: Engine, capacity: int = 100000):
+    def __init__(self, engine: Engine, capacity: int = 100000, survey_capacity: int = 20000):
         self.session = sessionmaker(engine)
         self.capacity = capacity
+        self.survey_capacity = survey_capacity
         self.lock = threading.Lock()
 
     def save(self, sample: NetworkSample) -> bool:
@@ -94,3 +103,40 @@ class NetworkStore:
         with self.session() as session:
             row = session.get(NetworkConfigurationRow, 1)
             return row.location if row else "Computador"
+
+    def save_survey(self, survey: ChannelSurvey) -> bool:
+        with self.lock, self.session.begin() as session:
+            existing = session.get(ChannelSurveyRow, str(survey.survey_id))
+            if existing:
+                if existing.payload != survey.model_dump_json():
+                    raise ValueError("survey ID already belongs to another payload")
+                return False
+            count = session.scalar(select(func.count()).select_from(ChannelSurveyRow))
+            if count >= self.survey_capacity:
+                raise ValueError("channel survey capacity reached; export/archive first")
+            session.add(
+                ChannelSurveyRow(
+                    survey_id=str(survey.survey_id),
+                    timestamp=survey.timestamp.isoformat(timespec="microseconds"),
+                    location=survey.location,
+                    payload=survey.model_dump_json(),
+                )
+            )
+            return True
+
+    def read_surveys(
+        self, start: datetime, end: datetime, location: str | None = None
+    ) -> list[ChannelSurvey]:
+        with self.session() as session:
+            query = select(ChannelSurveyRow).where(
+                ChannelSurveyRow.timestamp >= start.isoformat(timespec="microseconds"),
+                ChannelSurveyRow.timestamp <= end.isoformat(timespec="microseconds"),
+            )
+            if location is not None:
+                query = query.where(ChannelSurveyRow.location == location)
+            rows = session.scalars(
+                query.order_by(ChannelSurveyRow.timestamp, ChannelSurveyRow.survey_id).limit(2001)
+            ).all()
+            if len(rows) > 2000:
+                raise ValueError("query exceeds 2000 surveys; shorten the period")
+            return [ChannelSurvey.model_validate_json(row.payload) for row in rows]

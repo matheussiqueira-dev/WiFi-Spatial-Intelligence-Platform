@@ -16,7 +16,7 @@ export default function ModelLabPanel({ token }: { token: string }) {
   const [result, setResult] = useState<Experiment | null>(null);
   const [items, setItems] = useState<{ id: string; created_at: string }[]>([]);
   const [offset, setOffset] = useState(0);
-  const [total, setTotal] = useState(0);
+  const [total, setTotal] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [job, setJob] = useState<z.infer<typeof jobSchema> | null>(null);
@@ -24,6 +24,24 @@ export default function ModelLabPanel({ token }: { token: string }) {
     job &&
     ["queued", "preparing", "training", "persisting"].includes(job.state);
   const jobId = job?.id;
+  // Persisted history is shown on mount instead of a misleading "0 experiments".
+  useEffect(() => {
+    let cancelled = false;
+    request(`/model-lab/runs?limit=5&offset=0`, token, experimentListSchema)
+      .then((data) => {
+        if (cancelled) return;
+        setItems(data.items);
+        setTotal(data.total);
+        setOffset(0);
+      })
+      .catch((e) => {
+        if (!cancelled)
+          setError(e instanceof Error ? e.message : "Falha no histórico");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
   useEffect(() => {
     if (!jobActive || !jobId) return;
     let cancelled = false;
@@ -40,12 +58,20 @@ export default function ModelLabPanel({ token }: { token: string }) {
         );
         if (cancelled) return;
         if (next.state === "completed" && next.run_id) {
-          const run = await request(
-            `/model-lab/runs/${next.run_id}`,
-            token,
-            experimentSchema,
-          );
-          if (!cancelled) setResult(run);
+          const [run, list] = await Promise.all([
+            request(`/model-lab/runs/${next.run_id}`, token, experimentSchema),
+            request(
+              `/model-lab/runs?limit=5&offset=0`,
+              token,
+              experimentListSchema,
+            ),
+          ]);
+          if (!cancelled) {
+            setResult(run);
+            setItems(list.items);
+            setTotal(list.total);
+            setOffset(0);
+          }
         }
         if (!cancelled) setJob(next);
       } catch (e) {
@@ -167,16 +193,26 @@ export default function ModelLabPanel({ token }: { token: string }) {
           Consultar experimentos
         </button>
       </div>
-      {job && (
-        <p role="status" aria-label="Estado do job">
-          Job {job.state} · etapa {job.progress}% · L0_SYNTHETIC
-          {job.error ? ` · ${job.error}` : ""}. Cancelamento cooperativo antes
-          da persistência.
-        </p>
-      )}
-      {busy && (
-        <p role="status">Executando experimento limitado na CPU local…</p>
-      )}
+      {/* Live regions stay mounted so screen readers announce later changes. */}
+      <p role="status" aria-label="Estado do job" className="live">
+        {job && (
+          <>
+            Job {job.state} · etapa {job.progress}% · L0_SYNTHETIC
+            {job.error ? (
+              <>
+                {" "}
+                · <span lang="en">{job.error}</span>
+              </>
+            ) : (
+              ""
+            )}
+            . Cancelamento cooperativo antes da persistência.
+          </>
+        )}
+      </p>
+      <p role="status" className="live">
+        {busy ? "Executando experimento limitado na CPU local…" : ""}
+      </p>
       {error && (
         <p role="alert" className="error">
           {error}
@@ -188,7 +224,8 @@ export default function ModelLabPanel({ token }: { token: string }) {
         </p>
       )}
       {result && (
-        <div aria-label="Resultado do experimento">
+        <section aria-labelledby="model-lab-result-title">
+          <h3 id="model-lab-result-title">Resultado do experimento</h3>
           <p>
             <strong>L0_SYNTHETIC</strong> · {result.model.id} ·{" "}
             {result.model.version}
@@ -298,7 +335,7 @@ export default function ModelLabPanel({ token }: { token: string }) {
           >
             Exportar experimento JSON
           </button>
-        </div>
+        </section>
       )}
       <ul>
         {items.map((item) => (
@@ -325,7 +362,11 @@ export default function ModelLabPanel({ token }: { token: string }) {
         ))}
       </ul>
       <div className="pagination">
-        <span>{total} experimentos persistidos</span>
+        <span>
+          {total === null
+            ? "Histórico ainda não consultado"
+            : `${total} experimentos persistidos`}
+        </span>
         <button
           className="secondary"
           disabled={busy || offset === 0}
@@ -335,7 +376,7 @@ export default function ModelLabPanel({ token }: { token: string }) {
         </button>
         <button
           className="secondary"
-          disabled={busy || offset + 5 >= total}
+          disabled={busy || total === null || offset + 5 >= total}
           onClick={() => execute(() => history(offset + 5))}
         >
           Mais experimentos

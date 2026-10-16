@@ -2,14 +2,16 @@
 
 import csv
 import io
+import logging
 from datetime import UTC, datetime, timedelta
 from typing import Literal
 
-from pydantic import Field, TypeAdapter, model_validator
+from pydantic import Field, TypeAdapter, ValidationError, model_validator
 
 from app.contracts import Event, StrictModel
 
 adapter = TypeAdapter(Event)
+logger = logging.getLogger("spatial.analytics")
 
 
 class AnalyticsQuery(StrictModel):
@@ -36,15 +38,46 @@ class AnalyticsQuery(StrictModel):
         return self
 
 
-def ordered(rows):
+def validated_rows(rows):
+    """Valid (event, segment) pairs in order plus the count of stored payloads rejected."""
     validated = []
     seen = set()
+    invalid = 0
     for row in rows:
-        event = adapter.validate_python(row["event"])
+        try:
+            event = adapter.validate_python(row["event"])
+        except (ValidationError, KeyError, TypeError):
+            invalid += 1
+            continue
         if event.event_id not in seen:
             validated.append((event, row["segment_id"]))
             seen.add(event.event_id)
-    return sorted(validated, key=lambda pair: (pair[0].timestamp, str(pair[0].event_id)))
+    if invalid:
+        # Count only: stored payloads must not be copied into the logs.
+        logger.warning("analytics.invalid_stored_records count=%d", invalid)
+    pairs = sorted(validated, key=lambda pair: (pair[0].timestamp, str(pair[0].event_id)))
+    return pairs, invalid
+
+
+def ordered(rows):
+    return validated_rows(rows)[0]
+
+
+def replay_page(rows, total, query):
+    """A page already ordered and limited in SQL; corrupt payloads are skipped and logged."""
+    events, _ = validated_rows(rows)
+    return {
+        "evidence_level": "L0_SYNTHETIC",
+        "mode": "REPLAY",
+        "snapshot_end": query.end.isoformat(),
+        "items": [
+            {"event": event.model_dump(mode="json"), "segment_id": segment}
+            for event, segment in events
+        ],
+        "total": total,
+        "limit": query.limit,
+        "offset": query.offset,
+    }
 
 
 def page(items, query):
@@ -57,23 +90,32 @@ def page(items, query):
 
 
 def replay(rows, query):
-    events = ordered(rows)
+    # Order and deduplicate on the stored keys; full validation only for the requested page.
+    unique = {}
+    for row in rows:
+        identifier = str(row["event"]["event_id"])
+        if identifier not in unique:
+            timestamp = datetime.fromisoformat(row["event"]["timestamp"])
+            unique[identifier] = (timestamp, identifier, row)
+    selection = sorted(unique.values(), key=lambda item: item[:2])
+    window = selection[query.offset : query.offset + query.limit]
+    items = []
+    for _, _, row in window:
+        event = adapter.validate_python(row["event"])
+        items.append({"event": event.model_dump(mode="json"), "segment_id": row["segment_id"]})
     return {
         "evidence_level": "L0_SYNTHETIC",
         "mode": "REPLAY",
         "snapshot_end": query.end.isoformat(),
-        **page(
-            [
-                {"event": event.model_dump(mode="json"), "segment_id": segment}
-                for event, segment in events
-            ],
-            query,
-        ),
+        "items": items,
+        "total": len(selection),
+        "limit": query.limit,
+        "offset": query.offset,
     }
 
 
 def aggregate(rows, query):
-    events = ordered(rows)
+    events, invalid = validated_rows(rows)
     seconds = {"minute": 60, "five_minutes": 300, "hour": 3600, "day": 86400}[query.bucket]
     buckets = {}
     previous = {}
@@ -207,7 +249,15 @@ def aggregate(rows, query):
             "Legacy records lack session attribution; no transitions inferred for them.",
             "No extrapolation before first/after last sample; missing buckets are unknown.",
             "Queue wait measures time before persistence, not sensing or total processing latency.",
-        ],
+        ]
+        + (
+            [
+                f"{invalid} stored record(s) failed contract validation and were excluded; "
+                "run an integrity check before relying on this period."
+            ]
+            if invalid
+            else []
+        ),
     }
 
 

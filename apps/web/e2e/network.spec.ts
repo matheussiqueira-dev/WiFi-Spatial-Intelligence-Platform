@@ -1,16 +1,13 @@
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
+import { e2eTarget } from "./target";
 
 // Protocol fixtures are explicitly labelled; real host acquisition is verified separately.
 test("network: authenticated telemetry ingestion, location comparison, export and mobile", async ({
   page,
   request,
 }) => {
-  const external = process.env.E2E_EXTERNAL === "1";
-  if (external && process.env.E2E_COMPOSE_PROJECT !== "wifi-spatial-native-e2e")
-    throw new Error("Network test requires the isolated verification stack");
-  const token = process.env.E2E_TOKEN ?? "e2e-only-" + "x".repeat(40);
-  const base = `http://127.0.0.1:${external ? Number(process.env.E2E_API_PORT ?? 8000) : 4810}/api/v1`;
+  const { token, apiBase: base } = e2eTarget();
   const headers = { Authorization: `Bearer ${token}` };
   const identifier = crypto.randomUUID();
   const payload = {
@@ -61,8 +58,37 @@ test("network: authenticated telemetry ingestion, location comparison, export an
       .getByLabel("Filtrar ponto")
       .getByRole("option", { name: "Fixture Quarto" }),
   ).toHaveCount(1);
+  const survey = await request.post(`${base}/network/channel-surveys`, {
+    headers,
+    data: {
+      survey_id: crypto.randomUUID(),
+      collector_id: crypto.randomUUID(),
+      timestamp: new Date().toISOString(),
+      location: "Fixture Sala",
+      channels: [
+        {
+          band: "5GHz",
+          channel: 149,
+          ap_count: 4,
+          strongest_signal_percent: 90,
+          utilization_percent: 60,
+        },
+      ],
+    },
+  });
+  expect(survey.ok()).toBe(true);
   await panel.getByLabel("Filtrar ponto").selectOption("Fixture Sala");
   await expect(panel.getByTestId("network-signal")).toHaveText("82%");
+  await expect(panel.getByTestId("channel-advice-5GHz")).toContainText(
+    "Considerar o canal 36",
+  );
+  const capabilities = page.locator("#capabilities");
+  await expect(capabilities.getByTestId("capability-profile")).toHaveText(
+    "Perfil: lab",
+  );
+  await expect(
+    capabilities.getByRole("row", { name: /Reidentificação/ }),
+  ).toContainText("Desligada");
   const download = page.waitForEvent("download");
   await panel.getByRole("button", { name: "Exportar medições CSV" }).click();
   expect((await download).suggestedFilename()).toBe("network-diagnostics.csv");
@@ -82,7 +108,8 @@ test("network: authenticated telemetry ingestion, location comparison, export an
     (
       await new AxeBuilder({ page })
         .include("#network")
-        .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+        .include("#capabilities")
+        .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
         .analyze()
     ).violations,
   ).toEqual([]);

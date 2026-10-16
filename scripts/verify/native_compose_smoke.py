@@ -3,18 +3,26 @@
 
 import hashlib
 import json
+import os
 import subprocess
 import time
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from urllib.parse import urlencode
-from urllib.request import Request, urlopen
+from urllib.request import ProxyHandler, Request, build_opener
 from uuid import uuid4
 
 from dotenv import dotenv_values
 
 ROOT = Path(__file__).resolve().parents[2]
-PROJECT = "wifi-spatial-native-e2e"
+# docker-e2e.ps1 passes its per-run project; anything else is refused below.
+PROJECT = os.environ.get("E2E_COMPOSE_PROJECT", "wifi-spatial-native-e2e")
+if not PROJECT.startswith("wifi-spatial-native-e2e"):
+    raise SystemExit(
+        "refusing to operate outside an isolated native verification project"
+    )
+# Loopback calls carry the bearer token: never route them through environment proxies.
+OPENER = build_opener(ProxyHandler({}))
 COMMAND = [
     "docker",
     "compose",
@@ -56,7 +64,7 @@ def main():
             },
             data=None if body is None else json.dumps(body).encode(),
         )
-        with urlopen(req, timeout=5) as response:
+        with OPENER.open(req, timeout=5) as response:
             return json.load(response)
 
     request("/simulation/stop", {})

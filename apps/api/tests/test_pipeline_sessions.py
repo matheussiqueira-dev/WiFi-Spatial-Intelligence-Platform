@@ -93,3 +93,38 @@ def test_status_snapshot_tolerates_concurrent_measurement_appends():
     stop.set()
     reader.join()
     assert not failures
+
+
+class ExplodingProvider:
+    streaming = True
+    connected = True
+    config = SimulationConfig()
+
+    async def next_event(self):
+        raise RuntimeError("unexpected provider defect")
+
+    async def disconnect(self):
+        self.connected = False
+
+    def diagnostics(self):
+        return {"reconnections": 0}
+
+
+def test_unexpected_provider_error_stops_the_session_but_keeps_ingest_alive():
+    async def scenario():
+        pipeline = Pipeline(GatedStore(), settings())
+        pipeline.provider = ExplodingProvider()
+        pipeline.state = "running"
+        ingest = asyncio.create_task(pipeline.ingest())
+        deadline = time.monotonic() + 3
+        while pipeline.error is None and time.monotonic() < deadline:
+            await asyncio.sleep(0.01)
+        alive = not ingest.done()
+        ingest.cancel()
+        await asyncio.gather(ingest, return_exceptions=True)
+        return pipeline, alive
+
+    pipeline, alive = asyncio.run(scenario())
+    assert alive, "ingest task died; no source would produce events until restart"
+    assert pipeline.state == "stopped"
+    assert pipeline.error

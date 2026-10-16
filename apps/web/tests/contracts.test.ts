@@ -204,9 +204,7 @@ test("golden analytics fixtures exercise intervals, transitions and replay", () 
   assert.ok(report.summary.unknown_count_samples > 0);
   const replay = replaySchema.parse(fixture("analytics-replay.example.json"));
   assert.deepEqual(
-    [
-      ...new Set(replay.items.map((item) => item.event.schema_version)),
-    ].sort(),
+    [...new Set(replay.items.map((item) => item.event.schema_version))].sort(),
     ["1.0.0", "1.1.0", "2.0.0"],
   );
 });

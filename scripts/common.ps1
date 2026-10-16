@@ -16,8 +16,13 @@ function Get-ProjectPython {
     foreach ($candidate in $candidates) {
         $command = Get-Command $candidate -ErrorAction SilentlyContinue
         if ($command) {
-            & $command.Source -c 'import sys; sys.exit(0 if (3,12) <= sys.version_info[:2] < (3,14) else 1)' 2>$null
-            if ($LASTEXITCODE -eq 0) { return $command.Source }
+            # A failing probe (stderr under Stop on PS 5.1, Store alias) means "try the next one".
+            try {
+                & $command.Source -c 'import sys; sys.exit(0 if (3,12) <= sys.version_info[:2] < (3,14) else 1)' 2>$null
+                if ($LASTEXITCODE -eq 0) { return $command.Source }
+            } catch {
+                continue
+            }
         }
     }
     throw 'Install Python 3.12 or 3.13. No compatible Python executable was found.'

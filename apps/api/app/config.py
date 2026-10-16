@@ -1,3 +1,4 @@
+from typing import Literal
 from urllib.parse import urlsplit
 
 from pydantic import Field, field_validator
@@ -20,6 +21,7 @@ class Settings(BaseSettings):
     ruview_token: str = Field(default="", max_length=512, repr=False)
     ruview_stale_seconds: float = Field(default=5, ge=1, le=60)
     legacy_lab_enabled: bool = False
+    capability_profile: Literal["lab", "commercial-br"] = "lab"
     backup_enabled: bool = False
     backup_interval_seconds: float = Field(default=86400, ge=60, le=604800)
     backup_destination: str = "runtime/backups"

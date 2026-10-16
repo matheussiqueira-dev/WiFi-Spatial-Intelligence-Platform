@@ -102,3 +102,72 @@ export function download(name: string, text: string, type: string) {
   link.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+
+export type AnalyticsFilters = {
+  start: string;
+  end: string;
+  bucket: string;
+  source: string;
+  scenario: string;
+  segment: string;
+};
+
+/** Resolves the form once; pagination reuses the result so "now" never moves. */
+export function analyticsParams(filters: AnalyticsFilters, now = new Date()) {
+  const start = new Date(filters.start);
+  if (!filters.start || Number.isNaN(start.getTime())) {
+    throw new Error("Informe a data inicial da consulta.");
+  }
+  const end = filters.end ? new Date(filters.end) : now;
+  if (Number.isNaN(end.getTime())) {
+    throw new Error("Informe uma data final válida ou deixe vazio para agora.");
+  }
+  const params = new URLSearchParams({
+    start: start.toISOString(),
+    end: end.toISOString(),
+    bucket: filters.bucket,
+    room_id: "living-room",
+  });
+  if (filters.source) params.set("source_id", filters.source);
+  if (filters.scenario) params.set("scenario", filters.scenario);
+  if (filters.segment) params.set("segment_id", filters.segment);
+  return params;
+}
+
+export function pageParams(applied: string, offset: number, limit = 100) {
+  const params = new URLSearchParams(applied);
+  params.set("limit", String(limit));
+  params.set("offset", String(offset));
+  return params;
+}
+
+/** Offset pages are only consistent while the selection total stays the same. */
+export async function collectReplay<T>(
+  fetchPage: (offset: number) => Promise<{ items: T[]; total: number }>,
+  pageSize = 200,
+  cap = 10000,
+) {
+  const all: T[] = [];
+  let expected: number | null = null;
+  for (let offset = 0; offset < cap; offset += pageSize) {
+    const page = await fetchPage(offset);
+    if (expected === null) expected = page.total;
+    if (page.total !== expected) {
+      throw new Error(
+        "O histórico mudou durante a carga (retenção); consulte novamente.",
+      );
+    }
+    all.push(...page.items);
+    if (all.length >= expected || page.items.length === 0) break;
+  }
+  return all;
+}
+
+export function occupancyBar(mean: number | null) {
+  if (mean === null) return { kind: "unknown" as const, height: "100%" };
+  if (mean === 0) return { kind: "zero" as const, height: "0%" };
+  return {
+    kind: "value" as const,
+    height: `${Math.max(4, (mean / 20) * 100)}%`,
+  };
+}

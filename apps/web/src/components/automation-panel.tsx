@@ -1,9 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 import { request } from "../lib/api";
 import { ruleSchema, rulesSchema, decisionsSchema } from "../lib/automation";
+
+function fetchAutomation(token: string, offset: number) {
+  return Promise.all([
+    request("/automation/rules", token, rulesSchema),
+    request(
+      `/automation/decisions?limit=10&offset=${offset}`,
+      token,
+      decisionsSchema,
+    ),
+  ]);
+}
 
 export default function AutomationPanel({ token }: { token: string }) {
   const [rules, setRules] = useState<z.infer<typeof rulesSchema> | null>(null);
@@ -13,15 +24,25 @@ export default function AutomationPanel({ token }: { token: string }) {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [threshold, setThreshold] = useState(1);
+  // Show persisted rules on mount instead of an unexplained empty list.
+  useEffect(() => {
+    let cancelled = false;
+    fetchAutomation(token, 0)
+      .then(([r, d]) => {
+        if (cancelled) return;
+        setRules(r);
+        setDecisions(d);
+      })
+      .catch((e) => {
+        if (!cancelled)
+          setError(e instanceof Error ? e.message : "Erro ao carregar regras");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
   async function refresh(offset = 0) {
-    const [r, d] = await Promise.all([
-      request("/automation/rules", token, rulesSchema),
-      request(
-        `/automation/decisions?limit=10&offset=${offset}`,
-        token,
-        decisionsSchema,
-      ),
-    ]);
+    const [r, d] = await fetchAutomation(token, offset);
     setRules(r);
     setDecisions(d);
   }
@@ -91,7 +112,14 @@ export default function AutomationPanel({ token }: { token: string }) {
           {error}
         </p>
       )}
-      {busy && <p role="status">Atualizando regras locais…</p>}
+      <p role="status" className="live">
+        {busy ? "Atualizando regras locais…" : ""}
+      </p>
+      {rules === null ? (
+        <p>Carregando regras persistidas…</p>
+      ) : (
+        rules.items.length === 0 && <p>Nenhuma regra cadastrada.</p>
+      )}
       {rules?.decision_capacity_reached && (
         <p role="alert">
           Capacidade de decisões atingida. Revisão offline necessária.

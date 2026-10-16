@@ -24,9 +24,29 @@ após reiniciar o computador, execute o comando de início novamente.
 
 Sem `-GatewayProbes`, só são lidos os atributos do enlace. Com a opção, são enviadas
 três sondas ICMP de até um segundo ao único gateway IPv4 privado da interface Wi-Fi.
-Nenhuma sonda é enviada à Internet. Não ocorre varredura de redes ou dispositivos.
+Nenhuma sonda é enviada à Internet. O coletor não dispara varredura nem sonda dispositivos; com `-ChannelSurvey` lê apenas a lista passiva do Windows (abaixo).
 Múltiplas interfaces conectadas/gateways ambíguos causam abstenção, sem escolher
 um alvo arbitrário. O parser suporta saída de `netsh` em português e inglês.
+
+## Ocupação de canais (opt-in, desde 15/10/2026)
+
+```powershell
+.\scripts\dev\start-wifi-monitor.ps1 -Background -GatewayProbes -ChannelSurvey
+```
+
+A cada 60 segundos o coletor lê `netsh wlan show networks mode=bssid`, ou seja, a
+lista que o Windows **já obteve** em suas varreduras passivas; não dispara varredura,
+não se conecta e não sonda redes de terceiros. No próprio host, cada rede é reduzida a
+banda, canal, sinal (%) e utilização do canal (BSS Load, quando anunciada) e agregada
+por canal. SSID, BSSID, autenticação e taxas são descartados antes do envio.
+
+`GET /api/v1/network/channel-plan?hours=1&location=` calcula, por banda, um índice de
+interferência para os canais candidatos sem DFS (2,4 GHz: 1/6/11; 5 GHz: 36–48 e
+149–165), com sobreposição de ±4 canais em 2,4 GHz e bloco de 80 MHz em 5 GHz. Uma
+rede é descontada no canal atual (o próprio roteador). A recomendação só sugere troca
+quando a diferença é ≥ 0,5 do índice; 6 GHz é apenas listado. Nada é alterado no
+roteador. Limites: 20.000 varreduras armazenadas, 2.000 por consulta, janela de 24 h.
+Tabela `channel_surveys`, migração aditiva `0008`.
 
 ## Uso diário
 
@@ -38,7 +58,7 @@ um alvo arbitrário. O parser suporta saída de `netsh` em português e inglês.
 
 O nome do ponto é informado manualmente; não existe localização espacial por RF.
 Amostras de pontos diferentes podem refletir horários, carga e condições diferentes.
-Não há recomendação automática de canal nem troca de configuração do roteador.
+A recomendação de canal (seção acima) é apenas sugestão; o roteador nunca é reconfigurado.
 
 ## Interpretação e limites
 

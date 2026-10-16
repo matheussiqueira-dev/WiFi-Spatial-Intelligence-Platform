@@ -1,5 +1,20 @@
 # Relatório de verificação
 
+## Auditoria P2/P3 e CI gratuito (Claude Code) — 15/10/2026, 22:15–22:58 Fortaleza
+
+| Comando / inspeção | Resultado |
+| --- | --- |
+| Red antes das correções | plano `SCAN sensing_events`; OFFSET de retenção = retention; 61 validações para página de 10; JSON aninhado e erro do provedor matando a ingestão; L1 apagado pela retenção; relatório gravado com auditoria falha; payload inválido → 500; 4 helpers web ausentes |
+| `Get-ProjectPython` PS 5.1 com stub em stderr | original: `RemoteException`; corrigido: encontra Python válido |
+| Teste Alembic × ORM | vazio no head; detecta índice removido (prova negativa) |
+| Benchmark 100 mil linhas | janela 1 min 256→1,2 ms; 2 h 440→144 ms; página replay 261→7 ms; fronteira de retenção 62→5 ms; write p50 1,5 ms |
+| `check.ps1` (22:40) | exit 0: Ruff/format, contratos, 200 backend, 6 launchers, 30 web, Prettier, tsc, build, 9 E2E Chromium (42,0 s), 1 skip |
+| CI backend em contêiner Linux (3.12 e 3.13) | exit 0: contratos sync (20), Ruff, 211 backend, 6 launchers, pip-audit dos dois locks sem vulnerabilidades conhecidas |
+| CI web em contêiner Node 22 limpo (`npm ci`) | lint, tsc, 30 web e build aprovados; `format:check` acusou `src/lib/network.ts` enquanto outra sessão o editava (corrigido por ela no gate seguinte) |
+| CI E2E em contêiner Linux (venv `.venv/bin`, Chromium com deps) | exit 0: 9 pass, 1 skip (RuView), 33,4 s |
+| `npm audit --audit-level=moderate` | 0 vulnerabilidades |
+| Gitleaks, pre-commit, Firefox/WebKit, NVDA | não executados nesta etapa |
+
 ## Continuidade Claude Code — 15/10/2026, 20:55–21:03 Fortaleza
 
 | Comando / inspeção | Resultado |

@@ -192,7 +192,8 @@ class RuViewProvider:
             self.failures = 0
             self.last_error = None
             return event
-        except (ValueError, ValidationError, OverflowError):
+        except (ValueError, ValidationError, OverflowError, RecursionError):
+            # RecursionError: deeply nested JSON below the frame size cap.
             self.rejected += 1
             await self._fail("RuView frame/status rejected: incompatible or non-synthetic data.")
         except HTTPError as error:

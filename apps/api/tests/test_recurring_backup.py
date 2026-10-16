@@ -1,5 +1,6 @@
 import asyncio
 import json
+import shutil
 import sqlite3
 import threading
 import time
@@ -103,18 +104,25 @@ def test_opt_in_lifespan_reports_actual_success(settings, tmp_path):
     with TestClient(create_app(settings)) as client:
         client.headers["Authorization"] = f"Bearer {settings.token}"
         assert client.get("/api/v1/governance/status").json()["backup"] == {"enabled": False}
+    # The workspace boundary requires a destination inside the repository.
     destination = Path(__file__).parents[3] / "artifacts" / f"backup-test-{uuid4()}"
     config = settings.model_copy(
         update={"backup_enabled": True, "backup_destination": str(destination)}
     )
-    with TestClient(create_app(config)) as client:
-        client.headers["Authorization"] = f"Bearer {settings.token}"
-        deadline = time.monotonic() + 3
-        while time.monotonic() < deadline:
-            status = client.get("/api/v1/governance/status").json()["backup"]
-            if status["successes"] >= 1:
-                break
-        assert status["last_success"] and status["last_error"] is None
+    try:
+        with TestClient(create_app(config)) as client:
+            client.headers["Authorization"] = f"Bearer {settings.token}"
+            deadline = time.monotonic() + 3
+            while time.monotonic() < deadline:
+                response = client.get("/api/v1/governance/status")
+                assert response.status_code == 200, response.text
+                status = response.json()["backup"]
+                if status["successes"] >= 1:
+                    break
+                time.sleep(0.02)
+            assert status["last_success"] and status["last_error"] is None
+    finally:
+        shutil.rmtree(destination, ignore_errors=True)
 
 
 def test_hold_is_preserved_by_backup(tmp_path):

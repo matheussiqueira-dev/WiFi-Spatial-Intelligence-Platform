@@ -1,5 +1,46 @@
 # Decisões de arquitetura — v3.0
 
+## ADR-011 — Composition root, routers por contexto e repositórios SQLite
+
+Status: Accepted. Data: 15/10/2026. Complementa ADR-001.
+
+- `app/bootstrap.py` constrói um `Container` (store, pipeline, model lab, fila, limiter,
+  backup, leitura de histórico, locks) por instância de aplicação; `create_app` só
+  compõe lifespan, middlewares, handlers e routers. `logging.basicConfig` saiu do import.
+- Rotas em `app/api/{simulation,analytics,model_lab,automation,catalog,stream}.py`,
+  sem closures; dependências via `request.app.state.container`. Paths, parâmetros,
+  `operationId` e componentes do OpenAPI comparados antes/depois: idênticos.
+- `app/adapters/sqlite/` separa engine/UDF (`database.py`), ORM (`models.py`) e
+  repositórios de eventos, regras, relatórios, laboratório e auditoria. Decisões de
+  regras continuam na mesma transação do evento (ADR-007) via `record_decisions`.
+  `app/storage.Store` permanece como fachada estável para pipeline, scripts e testes.
+- Revogação usa `Pipeline.quiesced()` em vez de a rota tocar lock e fila internos.
+  Cenários, geometria 8 × 6 e sensores virtuais vêm de `domain/acquisition.py`; limites
+  20/1000 de `domain/rules.py`. O heartbeat do WS preserva o `get` pendente entre
+  iterações, e `/system/status` roda no event loop.
+- Não mudou: códigos HTTP, contratos exportados, migrações. Pendentes: hierarquia de
+  exceções de domínio, auditar como `operation.denied` só recusas protetivas, porta
+  explícita `SourceProvider`, `TrustedHost` configurável e docs `/docs` opt-in.
+
+## ADR-010 — Integridade do histórico, verificação descartável e CI gratuito
+
+Status: Accepted. Data: 15/10/2026.
+
+- Payload armazenado que falha no contrato é **excluído e declarado** nas `limitations`
+  do relatório (contagem, sem conteúdo no log), em vez de derrubar analytics com 500.
+  Evidência forjada (ex.: L3 falso) continua nunca contada.
+- Retenção por quantidade apaga somente `L0_SYNTHETIC`. Evidência L1/L2 futura exigirá
+  política própria de retenção (Governance/RetentionPolicy), nunca efeito colateral.
+- Replay pagina no SQL com ordem `spatial_epoch_us(timestamp), event_id`; offset continua
+  (ADR-003). A UI recusa um replay cujo total muda durante a carga e pede nova consulta.
+- `docker-e2e.ps1` cria um projeto Compose por execução e remove **apenas o volume
+  descartável desse projeto** ao final; volumes de uso nunca são tocados. Specs externos
+  exigem projeto `wifi-spatial-native-e2e*`, token e porta explícitos e conferem a porta
+  no Docker antes de passos destrutivos.
+- CI no GitHub Actions somente com runners Linux (cota gratuita), actions pinadas por
+  SHA, sem segredos, permissões `contents: read`; Dependabot apenas propõe PRs. O gate
+  local `check.ps1` continua normativo no Windows.
+
 ## ADR-009 — Avatares articulados como apresentação, pesquisa RF separada
 
 Status: Accepted para apresentação; reconhecimento RF permanece pesquisa.

@@ -6,7 +6,7 @@ import json
 import subprocess
 import time
 from pathlib import Path
-from urllib.request import Request, urlopen
+from urllib.request import ProxyHandler, Request, build_opener
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--docker", default="docker")
@@ -49,7 +49,8 @@ def request(path, method="GET", data=None):
             "Content-Type": "application/json",
         },
     )
-    with urlopen(query, timeout=5) as response:
+    # The bearer token must never travel through an environment proxy.
+    with build_opener(ProxyHandler({})).open(query, timeout=5) as response:
         return json.load(response)
 
 

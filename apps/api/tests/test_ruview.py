@@ -103,6 +103,7 @@ def upstream():
         "bad": False,
         "duplicates": False,
         "oversize": False,
+        "nested": False,
         "ignored": False,
         "http_redirect": False,
         "ws_redirect": False,
@@ -156,6 +157,8 @@ def upstream():
                         raw = "invalid-json"
                     if state["oversize"]:
                         raw = "x" * 300000
+                    if state["nested"]:
+                        raw = "[" * 100000 + "]" * 100000  # under the frame cap, deeper than json
                     if state["ignored"]:
                         raw = json.dumps({"type": "pose_data"})
                     if state["duplicates"] and last is not None:
@@ -318,7 +321,9 @@ def test_reconnect_after_disconnect_and_stale_stream(settings):
             wait_for(client, lambda s: s["produced_events"] > count and s["connected"])
 
 
-@pytest.mark.parametrize("fault", ["source", "frame_source", "bad", "oversize", "ignored"])
+@pytest.mark.parametrize(
+    "fault", ["source", "frame_source", "bad", "oversize", "nested", "ignored"]
+)
 def test_service_and_stream_failures_fail_closed(settings, fault):
     with upstream() as (faults, *urls):
         faults[fault] = "esp32" if fault in {"source", "frame_source"} else True

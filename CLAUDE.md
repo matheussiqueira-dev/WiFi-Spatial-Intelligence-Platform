@@ -17,6 +17,15 @@ Leia `AGENTS.md`, `docs/PROGRESS.md`, `docs/SECURITY_REVIEW.md` e, se existir,
 consolidado será a referência principal quando fornecido. Não recrie esse documento
 a partir de hipóteses sobre o histórico de conversas.
 
+## Atualização v4.0 (15/10/2026)
+
+Plano mestre v4, seção 0A: construir todas as capacidades com funcionalidade real e
+recortar depois por mercado. Toda capacidade nova entra em
+`apps/api/app/capabilities.py` (grupo A–D, status, evidência, etiquetas LGPD/Anatel/
+ANVISA, perfis `lab`/`commercial-br` via `SPATIAL_CAPABILITY_PROFILE`). Grupo A (rede)
+é a prioridade de dado real; B/C seguem L0 até haver CSI e protocolo; D (identificação)
+continua BLOCKED. Etiquetas são hipóteses de trabalho, não parecer jurídico.
+
 ## Estado e limites
 
 Diagnóstico de host autorizado em 15/10/2026: módulo separado `/api/v1/network`,

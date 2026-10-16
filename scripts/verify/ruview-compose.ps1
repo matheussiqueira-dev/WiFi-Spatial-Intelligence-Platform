@@ -6,8 +6,14 @@ $pythonPath = Join-Path (Get-Location) 'apps/api/.venv/Scripts/python.exe'
 if (-not (Test-Path $pythonPath)) { throw 'Run bootstrap.ps1 first.' }
 New-Item artifacts -ItemType Directory -Force | Out-Null
 if (-not (Test-Path artifacts/f2-compose.env)) {
-    & $pythonPath -c 'from pathlib import Path; import secrets; Path("artifacts/f2-compose.env").write_text("SPATIAL_TOKEN=" + secrets.token_hex(32) + "\nSPATIAL_RUVIEW_TOKEN=" + secrets.token_hex(32) + "\n")'
-    Assert-Exit 'Isolated credentials creation'
+    $lines = foreach ($name in @('SPATIAL_TOKEN', 'SPATIAL_RUVIEW_TOKEN')) {
+        $bytes = New-Object byte[] 32
+        $rng = [Security.Cryptography.RandomNumberGenerator]::Create()
+        $rng.GetBytes($bytes)
+        $rng.Dispose()
+        $name + '=' + (($bytes | ForEach-Object { $_.ToString('x2') }) -join '')
+    }
+    Set-Content -LiteralPath artifacts/f2-compose.env -Value $lines -Encoding ascii
 }
 $composeArguments = @('compose', '--env-file', 'artifacts/f2-compose.env', '-f', 'compose.yaml', '-f', 'compose.ruview.yaml', '-f', 'compose.ruview.verify.yaml', '-p', 'wifi-spatial-f2-compose-verification')
 $previousLegacyFlag = $env:SPATIAL_LEGACY_LAB_ENABLED
@@ -20,7 +26,7 @@ try {
     & $pythonPath scripts/verify/ruview_compose_smoke.py
     Assert-Exit 'Official stream and SQLite restart verification'
 } finally {
-    docker @composeArguments down
-    Assert-Exit 'Isolated F2 stack shutdown (volume preserved)'
     $env:SPATIAL_LEGACY_LAB_ENABLED = $previousLegacyFlag
+    docker @composeArguments down
+    if ($LASTEXITCODE -ne 0) { Write-Warning "Isolated F2 stack shutdown failed (exit $LASTEXITCODE); volume preserved." }
 }

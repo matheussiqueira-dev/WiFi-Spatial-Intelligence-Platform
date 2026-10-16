@@ -1,6 +1,6 @@
-# WiFi Spatial Intelligence Platform — Plano Mestre v3.0
+# WiFi Spatial Intelligence Platform — Plano Mestre v4.0
 
-**Atualizado:** 2026-10-15  
+**Atualizado:** 2026-10-15 (v4.0 acrescenta a seção 0A; seções 0–17 da v3 continuam vigentes)  
 **Destino no IntelliJ:** `docs/PROJECT_MASTER_PLAN.md`  
 **Repositório:** `matheussiqueira-dev/WiFi-Spatial-Intelligence-Platform`  
 **Ambiente:** Windows / PowerShell / IntelliJ / Codex  
@@ -19,6 +19,42 @@
 6. **Integridade científica.** Dados gerados = `L0_SYNTHETIC`. Dados gravados não viram automaticamente verdade validada. Resultados de presença, vitais, sono e pose devem informar evidência, incerteza e origem; não são diagnósticos clínicos nem alertas de segurança certificados.
 7. **Proteger o que já funciona.** Antes de mudanças grandes, inventariar o MVP reportado, executar testes, registrar riscos, criar adaptadores e migrar em incrementos testáveis. Não apagar dados do usuário ou alterações não commitadas.
 8. **Autonomia ampla, mas delimitada.** O agente está autorizado pelo usuário a operar no projeto local conforme a seção 3. Não é autorização para ignorar proteções do Codex, aprovar prompts por conta própria ou modificar recursos fora do workspace.
+
+## 0A. Atualização v4.0 — produto completo primeiro, recorte regulatório por configuração
+
+**Decisão do proprietário (15/10/2026):** construir todas as capacidades interessantes
+que tenham funcionalidade real e decidir depois, por mercado, o que pode ser
+comercializado. Para que essa decisão posterior seja configuração e não refatoração,
+toda capacidade passa a ser registrada no **catálogo de capacidades**
+(`apps/api/app/capabilities.py`, exposto em `GET /api/v1/capabilities`), com:
+
+- `group` (A–D, abaixo), `status` (vocabulário da seção 8) e `evidence_ceiling`
+  (maior nível de evidência que a implementação atual consegue produzir);
+- `regulatory`: etiquetas de enquadramento — `LGPD_PERSONAL`, `LGPD_SENSITIVE`
+  (LGPD art. 11), `ANATEL_RADIO` (homologação se hardware rádio for vendido),
+  `ANVISA_SAMD` (software como dispositivo médico, RDC 657/2022), `NONE`;
+- `requires_hardware`, `requires_consent` e `profiles`: perfis em que a capacidade
+  pode ficar ligada (`lab`, `commercial-br`). O perfil ativo vem de
+  `SPATIAL_CAPABILITY_PROFILE` (padrão `lab`).
+
+O catálogo é declaração de intenção e de enquadramento, **não parecer jurídico**.
+Etiquetas regulatórias são hipóteses de trabalho a revisar com especialista antes de
+qualquer venda. Uma capacidade só muda de status quando o código e a evidência mudam.
+
+| Grupo | Escopo | Exemplos | Pré-requisito para dado real |
+|---|---|---|---|
+| A — Rede | Telemetria e planejamento da própria rede | diagnóstico do enlace, análise de canais, comparação de pontos, mapa por ponto | Nenhum além do computador (agente Windows) |
+| B — Ambiente | Sensoriamento RF de presença/movimento | presença, ocupação, entradas/saídas, impressão RF do ambiente | CSI (ESP32-S3 ou placa compatível) + consentimento |
+| C — Saúde/segurança | Sinais fisiológicos e eventos de risco | respiração, frequência cardíaca, queda, sono | CSI + protocolo de validação; enquadramento ANVISA antes de alegação clínica |
+| D — Identificação | Reconhecer indivíduos | reidentificação por marcha/assinatura RF | **BLOCKED**: princípio 5 continua vigente; só reabre por decisão explícita, com consentimento ativo por pessoa cadastrada, finalidade documentada e revisão LGPD |
+
+Regras v4: (1) grupo A é a prioridade de funcionalidade real imediata, pois não depende
+de compra; (2) grupos B/C podem evoluir em `L0_SYNTHETIC`, mas nunca exibem status
+`VALIDATED_REAL_DATA` sem o protocolo de `docs/RF_VALIDATION_PROTOCOL.md`;
+(3) capacidade nova sem entrada no catálogo não é considerada entregue;
+(4) nenhum perfil comercial liga capacidade com etiqueta `ANVISA_SAMD` ou do grupo D.
+Varredura passiva de redes vizinhas (grupo A) envia somente agregados por canal;
+SSID, BSSID e qualquer identificador de terceiros são descartados no host.
 
 ## 1. Baseline: fatos reportados versus fatos verificados
 

@@ -180,6 +180,7 @@ Comandos individuais:
 .\apps\api\.venv\Scripts\python.exe -m ruff check apps/api scripts/verify
 .\apps\api\.venv\Scripts\python.exe -m ruff format --check apps/api scripts/verify
 npm.cmd run lint
+npm.cmd run format:check
 npm.cmd run typecheck
 npm.cmd run test:web
 npm.cmd run build:e2e
@@ -188,16 +189,28 @@ npm.cmd audit
 .\apps\api\.venv\Scripts\python.exe -m pip_audit -r apps/api/requirements.runtime.txt
 ```
 
-O teste E2E apaga eventos **apenas na sua base temporária**. `E2E_EXTERNAL=1` e
-`E2E_COMPOSE_PROJECT=wifi-spatial-verification` destinam-se
-somente a uma stack Docker de verificação isolada: nesse modo usa portas 3000/8000 e
-o token de `.env`, e apaga o histórico da stack indicada. Nunca use essa opção contra
-uma stack que contenha histórico a preservar.
+O teste E2E apaga eventos **apenas na sua base temporária**. Para rodar os mesmos
+specs contra containers, use somente `.\scripts\verify\docker-e2e.ps1`: ele cria um
+projeto Compose descartável `wifi-spatial-native-e2e-<data>` (API 4900, web 4400),
+define `E2E_EXTERNAL`, `E2E_COMPOSE_PROJECT`, `E2E_TOKEN`, `E2E_API_PORT` e
+`E2E_WEB_PORT` e remove ao final apenas o volume desse projeto. Os specs recusam o
+modo externo sem essas variáveis explícitas, recusam a porta 8000 e conferem no Docker
+que a porta pertence ao projeto isolado antes de apagar qualquer dado.
+
+CI gratuito em `.github/workflows/ci.yml` (runners Linux): backend 3.12/3.13 com
+`linux_checks.py`, web, E2E Chromium, Gitleaks e npm audit. `.pre-commit-config.yaml`
+é opcional (`pip install pre-commit`) e não substitui `check.ps1`.
 
 ## Organização
 
 ```text
-apps/api/app/          API, contratos Pydantic, simulador, pipeline e persistência
+apps/api/app/          contratos Pydantic, pipeline, analytics e serviços
+apps/api/app/main.py  composição: lifespan, middlewares e inclusão dos routers
+apps/api/app/bootstrap.py       Container com adaptadores e serviços por instância
+apps/api/app/api/              routers por contexto (simulação, analytics, model lab,
+                               automação, catálogo/governança, stream WebSocket)
+apps/api/app/domain/           domínio puro (cena sintética, janelas, regras, pacotes)
+apps/api/app/adapters/sqlite/  repositórios por contexto; app/storage.py é a fachada
 apps/api/migrations/  migrações Alembic
 apps/api/tests/       contratos, cenários, API, WebSocket e banco
 apps/web/src/         App Router, dashboard, observatório, validação dos dados

@@ -4,13 +4,18 @@ import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { request, requestText } from "../lib/api";
 import {
+  analyticsParams,
   analyticsSchema,
+  collectReplay,
+  occupancyBar,
+  pageParams,
   replaySchema,
   reportsSchema,
   download,
   type Analytics,
   type ReplayFrame,
 } from "../lib/analytics";
+import { historicalScenarios } from "../lib/scenarios";
 import Observatory from "./observatory";
 
 const localDate = (date: Date) =>
@@ -43,6 +48,7 @@ export default function AnalyticsPanel({ token }: { token: string }) {
     [],
   );
   const [savedId, setSavedId] = useState("");
+  // Resolved query (fixed UTC start/end and filters); pages only change the offset.
   const [applied, setApplied] = useState("");
   const generation = useRef(0);
 
@@ -70,55 +76,42 @@ export default function AnalyticsPanel({ token }: { token: string }) {
     return () => clearTimeout(timer);
   }, [playing, index, speed, frames]);
 
-  function parameters(pageOffset = 0) {
-    const params = new URLSearchParams({
-      start: new Date(start).toISOString(),
-      end: (end ? new Date(end) : new Date()).toISOString(),
-      bucket,
-      room_id: "living-room",
-      limit: "100",
-      offset: String(pageOffset),
-    });
-    if (source) params.set("source_id", source);
-    if (scenario) params.set("scenario", scenario);
-    if (segment) params.set("segment_id", segment);
-    return params;
-  }
-
-  async function load(pageOffset = 0) {
+  async function load() {
     const run = ++generation.current;
     setPlaying(false);
     setBusy(true);
     setError("");
     setMessage("");
     try {
-      const params = parameters(pageOffset);
+      const base = analyticsParams({
+        start,
+        end,
+        bucket,
+        source,
+        scenario,
+        segment,
+      }).toString();
       const next = await request(
-        `/analytics?${params}`,
+        `/analytics?${pageParams(base, 0)}`,
         token,
         analyticsSchema,
       );
-      const all: ReplayFrame[] = [];
-      const replayParams = new URLSearchParams(params);
-      replayParams.set("limit", "200");
-      for (let cursor = 0; cursor < 10000; cursor += 200) {
-        replayParams.set("offset", String(cursor));
+      const all = await collectReplay<ReplayFrame>(async (cursor) => {
         const page = await request(
-          `/analytics/replay?${replayParams}`,
+          `/analytics/replay?${pageParams(base, cursor, 200)}`,
           token,
           replaySchema,
         );
-        if (run !== generation.current) return;
-        all.push(...page.items);
-        if (all.length >= page.total) break;
-      }
+        if (run !== generation.current) throw new Error("superseded");
+        return page;
+      });
       const list = await request("/analytics/reports", token, reportsSchema);
       if (run !== generation.current) return;
       setReport(next);
       setFrames(all);
       setIndex(0);
-      setOffset(pageOffset);
-      setApplied(params.toString());
+      setOffset(0);
+      setApplied(base);
       setSaved(list.items);
       setSavedId("");
     } catch (e) {
@@ -134,11 +127,37 @@ export default function AnalyticsPanel({ token }: { token: string }) {
     }
   }
 
+  // Aggregation pages reuse the applied query and leave the loaded replay untouched.
+  async function loadPage(pageOffset: number) {
+    if (!applied) return;
+    const run = ++generation.current;
+    setBusy(true);
+    setError("");
+    try {
+      const next = await request(
+        `/analytics?${pageParams(applied, pageOffset)}`,
+        token,
+        analyticsSchema,
+      );
+      if (run !== generation.current) return;
+      setReport(next);
+      setOffset(pageOffset);
+    } catch (e) {
+      if (run === generation.current) {
+        setError(
+          e instanceof Error ? e.message : "Falha ao consultar a página.",
+        );
+      }
+    } finally {
+      if (run === generation.current) setBusy(false);
+    }
+  }
+
   async function save() {
     setBusy(true);
     setError("");
     try {
-      const body = Object.fromEntries(new URLSearchParams(applied));
+      const body = Object.fromEntries(pageParams(applied, offset));
       const result = await request(
         "/analytics/reports",
         token,
@@ -185,7 +204,10 @@ export default function AnalyticsPanel({ token }: { token: string }) {
     setBusy(true);
     setError("");
     try {
-      const text = await requestText(`/analytics/export.csv?${applied}`, token);
+      const text = await requestText(
+        `/analytics/export.csv?${pageParams(applied, offset)}`,
+        token,
+      );
       download("synthetic-analytics.csv", text, "text/csv;charset=utf-8");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Falha na exportação.");
@@ -261,18 +283,10 @@ export default function AnalyticsPanel({ token }: { token: string }) {
               onChange={(e) => setScenario(e.target.value)}
             >
               <option value="">Todos os cenários</option>
-              {[
-                "empty",
-                "stationary",
-                "walking",
-                "entering",
-                "leaving",
-                "interference",
-                "packet_loss",
-                "disconnect",
-                "ruview-simulated",
-              ].map((value) => (
-                <option key={value}>{value}</option>
+              {Object.entries(historicalScenarios).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
               ))}
             </select>
           </label>
@@ -301,14 +315,13 @@ export default function AnalyticsPanel({ token }: { token: string }) {
         virtuais não produzem streams individuais; o filtro usa a fonte de
         observação disponível.
       </p>
-      {busy && <p role="status">Carregando análises…</p>}
       {error && (
         <p role="alert" className="error">
           {error}
         </p>
       )}
       <p role="status" aria-live="polite" aria-label="Resultado das análises">
-        {message}
+        {busy ? "Carregando análises…" : message}
       </p>
       {report && summary && (
         <>
@@ -377,7 +390,8 @@ export default function AnalyticsPanel({ token }: { token: string }) {
             <>
               <h3>Ocupação por período</h3>
               <p>
-                Altura: média de ocupantes por amostra (0–20). Períodos sem
+                Altura: média de ocupantes por amostra (0–20). Barras tracejadas
+                indicam contagem indisponível, que não é zero. Períodos sem
                 observação não são sala vazia. Horários exibidos no fuso local.
               </p>
               <div
@@ -385,15 +399,17 @@ export default function AnalyticsPanel({ token }: { token: string }) {
                 role="img"
                 aria-label="Ocupação média por período; valores completos na tabela seguinte"
               >
-                {report.buckets.items.map((item) => (
-                  <div
-                    key={`${item.timestamp}-${item.source_id}`}
-                    title={`${time(item.timestamp)}: ${item.occupancy_mean ?? "indisponível"}`}
-                    style={{
-                      height: `${Math.max(4, ((item.occupancy_mean ?? 0) / 20) * 100)}%`,
-                    }}
-                  />
-                ))}
+                {report.buckets.items.map((item) => {
+                  const bar = occupancyBar(item.occupancy_mean);
+                  return (
+                    <div
+                      key={`${item.timestamp}-${item.source_id}`}
+                      className={`bar-${bar.kind}`}
+                      title={`${time(item.timestamp)}: ${item.occupancy_mean ?? "indisponível"}`}
+                      style={{ height: bar.height }}
+                    />
+                  );
+                })}
               </div>
               <div
                 className="table-scroll"
@@ -431,10 +447,13 @@ export default function AnalyticsPanel({ token }: { token: string }) {
                 </table>
               </div>
               <div className="pagination">
-                <span>{report.buckets.total} agregações</span>
+                <span>
+                  {report.buckets.total} agregações · a página também desloca
+                  intervalos e transições
+                </span>
                 <button
                   disabled={busy || offset === 0 || !applied}
-                  onClick={() => void load(Math.max(0, offset - 100))}
+                  onClick={() => void loadPage(Math.max(0, offset - 100))}
                 >
                   Agregações anteriores
                 </button>
@@ -442,7 +461,7 @@ export default function AnalyticsPanel({ token }: { token: string }) {
                   disabled={
                     busy || offset + 100 >= report.buckets.total || !applied
                   }
-                  onClick={() => void load(offset + 100)}
+                  onClick={() => void loadPage(offset + 100)}
                 >
                   Próximas agregações
                 </button>
@@ -457,8 +476,15 @@ export default function AnalyticsPanel({ token }: { token: string }) {
                   </li>
                 ))}
               </ul>
-              {report.transitions.total === 0 && (
+              {report.transitions.total === 0 ? (
                 <p>Nenhuma transição de contagem estimável.</p>
+              ) : (
+                report.transitions.items.length === 0 && (
+                  <p>
+                    {report.transitions.total} transições no intervalo; nenhuma
+                    nesta página.
+                  </p>
+                )
               )}
               <p>
                 {report.intervals.total} intervalos entre amostras;{" "}
@@ -539,7 +565,8 @@ export default function AnalyticsPanel({ token }: { token: string }) {
           )}
           <details>
             <summary>Limitações e critérios de interpretação</summary>
-            <ul>
+            <p>Texto técnico original do contrato da API, em inglês:</p>
+            <ul lang="en">
               {report.limitations.map((item) => (
                 <li key={item}>{item}</li>
               ))}

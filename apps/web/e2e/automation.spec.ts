@@ -1,16 +1,22 @@
 import { expect, test } from "@playwright/test";
+import { e2eTarget } from "./target";
 
 test("automation: persisted dry-run decision and revocation", async ({
   page,
   request,
 }) => {
-  const external = process.env.E2E_EXTERNAL === "1";
-  if (external && process.env.E2E_COMPOSE_PROJECT !== "wifi-spatial-native-e2e")
-    throw new Error("Isolated stack required");
-  const token = process.env.E2E_TOKEN ?? "e2e-only-" + "x".repeat(40);
-  const base = `http://127.0.0.1:${external ? Number(process.env.E2E_API_PORT ?? 8000) : 4810}/api/v1`;
+  const { token, apiBase: base } = e2eTarget();
   const headers = { Authorization: `Bearer ${token}` };
-  await request.post(`${base}/simulation/stop`, { headers });
+  const decisionTotal = async () => {
+    const response = await request.get(`${base}/automation/decisions`, {
+      headers,
+    });
+    expect(response.ok()).toBe(true);
+    return (await response.json()).total as number;
+  };
+  expect(
+    (await request.post(`${base}/simulation/stop`, { headers })).ok(),
+  ).toBe(true);
   await page.goto("/dashboard");
   await page.getByLabel("Token de acesso local").fill(token);
   await page.getByRole("button", { name: "Conectar", exact: true }).click();
@@ -20,26 +26,24 @@ test("automation: persisted dry-run decision and revocation", async ({
       response.request().method() === "POST",
   );
   await page.getByRole("button", { name: "Criar regra dry-run" }).click();
-  const rule = await (await created).json();
+  const createdResponse = await created;
+  expect(createdResponse.ok()).toBe(true);
+  const rule = await createdResponse.json();
   const revoke = page
     .locator(`[data-rule-id="${rule.id}"]`)
     .getByRole("button");
   await expect(revoke).toBeEnabled();
-  await request.post(`${base}/simulation/start`, {
+  // Compare with the count before this run; reused databases may hold decisions.
+  const before = await decisionTotal();
+  const first = await request.post(`${base}/simulation/start`, {
     headers,
     data: { occupants: 2, speed: 4 },
   });
-  await expect
-    .poll(
-      async () =>
-        (
-          await (
-            await request.get(`${base}/automation/decisions`, { headers })
-          ).json()
-        ).total,
-    )
-    .toBeGreaterThan(0);
-  await request.post(`${base}/simulation/stop`, { headers });
+  expect(first.ok()).toBe(true);
+  await expect.poll(decisionTotal).toBeGreaterThan(before);
+  expect(
+    (await request.post(`${base}/simulation/stop`, { headers })).ok(),
+  ).toBe(true);
   await page
     .getByRole("button", { name: "Atualizar regras e decisões" })
     .click();
@@ -48,15 +52,13 @@ test("automation: persisted dry-run decision and revocation", async ({
   );
   await revoke.click();
   await expect(revoke).toBeDisabled();
-  const count = (
-    await (
-      await request.get(`${base}/automation/decisions`, { headers })
-    ).json()
-  ).total;
-  await request.post(`${base}/simulation/start`, {
+  const count = await decisionTotal();
+  const restarted = await request.post(`${base}/simulation/start`, {
     headers,
     data: { occupants: 2, speed: 4 },
   });
+  expect(restarted.ok()).toBe(true);
+  expect((await restarted.json()).produced_events).toBe(0);
   await expect
     .poll(
       async () =>
@@ -64,12 +66,8 @@ test("automation: persisted dry-run decision and revocation", async ({
           .produced_events,
     )
     .toBeGreaterThan(1);
-  await request.post(`${base}/simulation/stop`, { headers });
   expect(
-    (
-      await (
-        await request.get(`${base}/automation/decisions`, { headers })
-      ).json()
-    ).total,
-  ).toBe(count);
+    (await request.post(`${base}/simulation/stop`, { headers })).ok(),
+  ).toBe(true);
+  expect(await decisionTotal()).toBe(count);
 });

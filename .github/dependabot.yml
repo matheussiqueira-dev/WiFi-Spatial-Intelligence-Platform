@@ -1,0 +1,22 @@
+# Update proposals only: every dependency change is still an explicit, reviewed PR,
+# and Python locks must be revalidated on Windows and Docker (see CLAUDE.md).
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      web-tooling:
+        dependency-type: development
+  - package-ecosystem: pip
+    directory: /apps/api
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3

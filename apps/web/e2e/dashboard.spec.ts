@@ -1,27 +1,9 @@
 import { expect, test } from "@playwright/test";
-import { readFileSync } from "node:fs";
-import path from "node:path";
 import AxeBuilder from "@axe-core/playwright";
+import { e2eTarget } from "./target";
 
-const external = process.env.E2E_EXTERNAL === "1";
-const token =
-  process.env.E2E_TOKEN ??
-  (external
-    ? (readFileSync(path.resolve(__dirname, "../../../.env"), "utf8")
-        .match(/^SPATIAL_TOKEN=(.+)$/m)?.[1]
-        ?.trim() ?? "")
-    : "e2e-only-" + "x".repeat(40));
-const apiBase = `http://127.0.0.1:${external ? Number(process.env.E2E_API_PORT ?? 8000) : 4810}/api/v1`;
-if (
-  external &&
-  !["wifi-spatial-verification", "wifi-spatial-native-e2e"].includes(
-    process.env.E2E_COMPOSE_PROJECT ?? "",
-  )
-) {
-  throw new Error(
-    "External tests require the isolated wifi-spatial-verification stack.",
-  );
-}
+// Never the usage stack: external mode needs an identified isolated project.
+const { token, apiBase } = e2eTarget();
 
 test("local MVP: auth, live stream, controls, history, mobile and deletion", async ({
   page,
@@ -138,7 +120,7 @@ test("local MVP: auth, live stream, controls, history, mobile and deletion", asy
   expect(
     (
       await new AxeBuilder({ page })
-        .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+        .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
         .analyze()
     ).violations,
   ).toEqual([]);
@@ -178,7 +160,7 @@ test("local MVP: auth, live stream, controls, history, mobile and deletion", asy
   expect(
     (
       await new AxeBuilder({ page })
-        .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+        .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
         .analyze()
     ).violations,
   ).toEqual([]);

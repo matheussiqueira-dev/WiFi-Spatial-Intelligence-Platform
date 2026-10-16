@@ -14,3 +14,14 @@ class SqliteHistoryRepository:
             selection.scenario,
             selection.segment_id,
         )
+
+    def read_page(self, selection: HistorySelection, offset: int, limit: int):
+        return self.store.observation_page(
+            selection.start,
+            selection.end,
+            offset,
+            limit,
+            selection.source_id,
+            selection.scenario,
+            selection.segment_id,
+        )

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useEffectEvent, useRef, useState } from "react";
 import { z } from "zod";
 import dynamic from "next/dynamic";
 import {
@@ -23,36 +23,36 @@ import {
   type SimulationConfig,
   type Status,
 } from "../lib/contracts";
+import { scenarioLabel, scenarioLabels as scenarios } from "../lib/scenarios";
 import Observatory from "./observatory";
-const AnalyticsPanel = dynamic(() => import("./analytics-panel"), {
-  loading: () => <p role="status">Carregando análises…</p>,
-});
-const NetworkPanel = dynamic(() => import("./network-panel"), {
-  loading: () => <p role="status">Carregando diagnóstico Wi-Fi…</p>,
-});
-const ModelLabPanel = dynamic(() => import("./model-lab-panel"), {
-  loading: () => <p role="status">Carregando laboratório…</p>,
-});
-const AutomationPanel = dynamic(() => import("./automation-panel"), {
-  loading: () => <p role="status">Carregando regras…</p>,
-});
+// memo: the only prop is the stable token, so live stream packets do not re-render panels.
+const AnalyticsPanel = memo(
+  dynamic(() => import("./analytics-panel"), {
+    loading: () => <p role="status">Carregando análises…</p>,
+  }),
+);
+const NetworkPanel = memo(
+  dynamic(() => import("./network-panel"), {
+    loading: () => <p role="status">Carregando diagnóstico Wi-Fi…</p>,
+  }),
+);
+const ModelLabPanel = memo(
+  dynamic(() => import("./model-lab-panel"), {
+    loading: () => <p role="status">Carregando laboratório…</p>,
+  }),
+);
+const CapabilitiesPanel = memo(
+  dynamic(() => import("./capabilities-panel"), {
+    loading: () => <p role="status">Carregando catálogo…</p>,
+  }),
+);
+const AutomationPanel = memo(
+  dynamic(() => import("./automation-panel"), {
+    loading: () => <p role="status">Carregando regras…</p>,
+  }),
+);
 
-const scenarios: Record<SimulationConfig["scenario"], string> = {
-  empty: "Sala vazia",
-  stationary: "Presença estacionária",
-  walking: "Movimento",
-  entering: "Entrada gradual",
-  leaving: "Saída gradual",
-  interference: "Perturbação sintética",
-  packet_loss: "Perda de pacotes",
-  disconnect: "Desconexão virtual",
-};
 const states = { running: "Em execução", paused: "Pausada", stopped: "Parada" };
-function scenarioLabel(scenario: string) {
-  return (
-    Object.entries(scenarios).find(([key]) => key === scenario)?.[1] ?? scenario
-  );
-}
 const services = {
   stopped: "Parado",
   connecting: "Conectando",
@@ -81,13 +81,90 @@ export default function Dashboard() {
     speed: 1,
   });
   const wsRef = useRef<WebSocket | null>(null);
+  const pageHeading = useRef<HTMLHeadingElement>(null);
+  const workspaceHeading = useRef<HTMLHeadingElement>(null);
+  const tokenInput = useRef<HTMLInputElement>(null);
+  const pendingFocus = useRef<"workspace" | "login" | null>(null);
+
+  // Login and logout unmount the focused control; move focus to the new context.
+  useEffect(() => {
+    if (pendingFocus.current === "workspace") workspaceHeading.current?.focus();
+    if (pendingFocus.current === "login") tokenInput.current?.focus();
+    pendingFocus.current = null;
+  }, [token]);
+
+  // Reads the current page without reconnecting the stream whenever it changes.
+  const onStreamEvent = useEffectEvent((event: SensingEvent) => {
+    setStatus((previous) =>
+      previous ? { ...previous, latest: event } : previous,
+    );
+    if (offset === 0)
+      setHistory((previous) =>
+        [
+          event,
+          ...previous.filter((item) => item.event_id !== event.event_id),
+        ].slice(0, 20),
+      );
+  });
 
   useEffect(() => {
     if (!token) return;
     let alive = true;
     let reconnect: ReturnType<typeof setTimeout> | undefined;
-    let inFlight = false;
     let retries = 0;
+    function connect() {
+      if (!alive) return;
+      setConnection("Conectando");
+      const url = new URL(`${apiBase}/api/v1/stream`);
+      url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
+      const ws = new WebSocket(url);
+      wsRef.current = ws;
+      const deadline = setTimeout(() => ws.close(), 7000);
+      ws.onopen = () => ws.send(JSON.stringify({ token }));
+      ws.onmessage = (message) => {
+        if (!alive) return;
+        try {
+          const packet = streamSchema.parse(JSON.parse(message.data));
+          clearTimeout(deadline);
+          retries = 0;
+          setConnection("Ao vivo");
+          if (packet.type === "status")
+            setStatus((previous) => mergeStatus(previous, packet.data));
+          else onStreamEvent(packet.data);
+        } catch {
+          setError(
+            "A API enviou dados incompatíveis com o contrato sintético.",
+          );
+          ws.close(STREAM_CONTRACT_CLOSE);
+        }
+      };
+      ws.onclose = (event) => {
+        clearTimeout(deadline);
+        if (!alive) return;
+        const outcome = streamCloseOutcome(event.code);
+        setConnection(outcome.label);
+        if (outcome.reconnect)
+          reconnect = setTimeout(
+            connect,
+            Math.min(1000 * 2 ** retries++, 10000),
+          );
+      };
+      ws.onerror = () => {
+        if (alive) setConnection("Reconectando");
+      };
+    }
+    connect();
+    return () => {
+      alive = false;
+      clearTimeout(reconnect);
+      wsRef.current?.close();
+    };
+  }, [token]);
+
+  useEffect(() => {
+    if (!token) return;
+    let alive = true;
+    let inFlight = false;
     let syncWarning = "";
     async function sync() {
       if (inFlight) return;
@@ -121,70 +198,25 @@ export default function Dashboard() {
         inFlight = false;
       }
     }
-    function connect() {
-      if (!alive) return;
-      setConnection("Conectando");
-      const url = new URL(`${apiBase}/api/v1/stream`);
-      url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
-      const ws = new WebSocket(url);
-      wsRef.current = ws;
-      const deadline = setTimeout(() => ws.close(), 7000);
-      ws.onopen = () => ws.send(JSON.stringify({ token }));
-      ws.onmessage = (message) => {
-        if (!alive) return;
-        try {
-          const packet = streamSchema.parse(JSON.parse(message.data));
-          clearTimeout(deadline);
-          retries = 0;
-          setConnection("Ao vivo");
-          if (packet.type === "status")
-            setStatus((previous) => mergeStatus(previous, packet.data));
-          else {
-            setStatus((previous) =>
-              previous ? { ...previous, latest: packet.data } : previous,
-            );
-            if (offset === 0)
-              setHistory((previous) =>
-                [
-                  packet.data,
-                  ...previous.filter(
-                    (e) => e.event_id !== packet.data.event_id,
-                  ),
-                ].slice(0, 20),
-              );
-          }
-        } catch {
-          setError(
-            "A API enviou dados incompatíveis com o contrato sintético.",
-          );
-          ws.close(STREAM_CONTRACT_CLOSE);
-        }
-      };
-      ws.onclose = (event) => {
-        clearTimeout(deadline);
-        if (!alive) return;
-        const outcome = streamCloseOutcome(event.code);
-        setConnection(outcome.label);
-        if (outcome.reconnect)
-          reconnect = setTimeout(
-            connect,
-            Math.min(1000 * 2 ** retries++, 10000),
-          );
-      };
-      ws.onerror = () => {
-        if (alive) setConnection("Reconectando");
-      };
-    }
     void sync();
-    connect();
     const interval = setInterval(() => void sync(), 2000);
     return () => {
       alive = false;
       clearInterval(interval);
-      clearTimeout(reconnect);
-      wsRef.current?.close();
     };
   }, [token, offset]);
+
+  function resetSession() {
+    pendingFocus.current = "login";
+    setToken("");
+    setStatus(null);
+    setHistory([]);
+    setSensors([]);
+    setTotal(0);
+    setOffset(0);
+    setError("");
+    setConnection("Desconectado");
+  }
 
   async function authenticate(event: React.FormEvent) {
     event.preventDefault();
@@ -193,6 +225,7 @@ export default function Dashboard() {
     try {
       const next = await request("/system/status", inputToken, statusSchema);
       setStatus(next);
+      pendingFocus.current = "workspace";
       setToken(inputToken);
       setInputToken("");
     } catch (e) {
@@ -291,7 +324,8 @@ export default function Dashboard() {
   return (
     <div className="shell">
       <aside className="sidebar">
-        <a className="brand" href="/dashboard">
+        {/* In-page anchor: a full navigation would drop the in-memory token. */}
+        <a className="brand" href="#main">
           <span className="brand-symbol" aria-hidden="true">
             ◈
           </span>
@@ -305,6 +339,7 @@ export default function Dashboard() {
           <a href="#simulation">Simulação</a>
           <a href="#history">Histórico</a>
           <a href="#analytics">Análises e replay</a>
+          <a href="#capabilities">Capacidades</a>
           <a href="#governance">Evidência e privacidade</a>
         </nav>
         <div className="sidebar-note">
@@ -317,28 +352,20 @@ export default function Dashboard() {
           <small>MVP · v0.1.0</small>
         </div>
       </aside>
-      <main>
+      <main id="main">
         <header className="page-header">
           <div>
             <p className="muted">Laboratório espacial</p>
-            <h1>Spatial Observatory</h1>
+            <h1 ref={pageHeading} tabIndex={-1}>
+              Spatial Observatory
+            </h1>
             <p>Explore presença e movimento em um ambiente virtual.</p>
           </div>
           <div className="connection">
             <span className={`dot ${disconnected ? "offline" : ""}`} />
             <span role="status">{connection}</span>
             {token && (
-              <button
-                className="text-button"
-                onClick={() => {
-                  setToken("");
-                  setStatus(null);
-                  setHistory([]);
-                  setSensors([]);
-                  setTotal(0);
-                  setConnection("Desconectado");
-                }}
-              >
+              <button className="text-button" onClick={resetSession}>
                 Sair
               </button>
             )}
@@ -357,7 +384,13 @@ export default function Dashboard() {
         {error && (
           <div className="error" role="alert">
             {error}
-            <button className="text-button" onClick={() => setError("")}>
+            <button
+              className="text-button"
+              onClick={() => {
+                setError("");
+                pageHeading.current?.focus();
+              }}
+            >
               Fechar aviso
             </button>
           </div>
@@ -376,6 +409,7 @@ export default function Dashboard() {
               <label htmlFor="token">Token de acesso local</label>
               <input
                 id="token"
+                ref={tokenInput}
                 type="password"
                 autoComplete="off"
                 value={inputToken}
@@ -395,7 +429,9 @@ export default function Dashboard() {
               <section id="observatory" className="panel spatial-panel">
                 <div className="panel-heading">
                   <div>
-                    <h2>Laboratório virtual</h2>
+                    <h2 ref={workspaceHeading} tabIndex={-1}>
+                      Laboratório virtual
+                    </h2>
                     <p>
                       {ruview
                         ? "RuView · fluxo simulado externo"
@@ -702,14 +738,16 @@ export default function Dashboard() {
                     </p>
                     {diagnostics.last_error && (
                       <p className="error" role="alert">
-                        {diagnostics.last_error}
+                        Diagnóstico do serviço (inglês):{" "}
+                        <span lang="en">{diagnostics.last_error}</span>
                       </p>
                     )}
                   </section>
                 )}
                 {status?.error && (
                   <p className="error" role="alert">
-                    {status.error}
+                    Mensagem da API (inglês):{" "}
+                    <span lang="en">{status.error}</span>
                   </p>
                 )}
               </section>
@@ -822,6 +860,7 @@ export default function Dashboard() {
         {token && <AnalyticsPanel token={token} />}
         {token && <ModelLabPanel token={token} />}
         {token && <AutomationPanel token={token} />}
+        {token && <CapabilitiesPanel token={token} />}
         <footer id="governance">
           <div>
             <h2>Evidência e privacidade</h2>

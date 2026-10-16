@@ -10,6 +10,7 @@ import {
   networkWarnings,
   type NetworkReport,
 } from "../lib/network";
+import ChannelPlanView from "./channel-plan";
 
 const states = {
   CONNECTED: "Conectado",
@@ -142,7 +143,9 @@ export default function NetworkPanel({ token }: { token: string }) {
           {error}
         </p>
       )}
-      {message && <p role="status">{message}</p>}
+      <p role="status" className="live">
+        {message}
+      </p>
       {!report ? (
         <p role="status">Carregando diagnóstico…</p>
       ) : (
@@ -296,6 +299,7 @@ export default function NetworkPanel({ token }: { token: string }) {
               </table>
             </div>
           )}
+          <ChannelPlanView token={token} location={location} />
           <details>
             <summary>Histórico das medições</summary>
             <div

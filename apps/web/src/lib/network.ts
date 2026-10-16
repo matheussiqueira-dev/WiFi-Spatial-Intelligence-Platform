@@ -91,3 +91,67 @@ export function networkWarnings(report: NetworkReport): string[] {
     );
   return warnings;
 }
+
+const band = z.enum(["2.4GHz", "5GHz", "6GHz"]);
+const channelNumber = z.number().int().min(1).max(233);
+const occupancy = z.object({
+  band,
+  channel: channelNumber,
+  ap_count: z.number().int().min(1).max(500),
+  strongest_signal_percent: z.number().int().min(0).max(100),
+  utilization_percent: z.number().int().min(0).max(100).nullable(),
+});
+export const channelPlanSchema = z.object({
+  data_class: z.literal("HOST_NETWORK_TELEMETRY"),
+  evidence_level: z.literal("L2_LIVE_UNVALIDATED"),
+  start: z.iso.datetime({ offset: true }),
+  end: z.iso.datetime({ offset: true }),
+  location: locationSchema.nullable(),
+  surveys: z.number().int().nonnegative(),
+  failed_surveys: z.number().int().nonnegative(),
+  last_survey_at: z.iso.datetime({ offset: true }).nullable(),
+  bands: z
+    .array(
+      z.object({
+        band,
+        observed: z.array(occupancy).max(64),
+        candidates: z
+          .array(
+            z.object({
+              channel: channelNumber,
+              observed_ap_count: z.number().nonnegative(),
+              interference_score: z.number().nonnegative(),
+            }),
+          )
+          .max(16),
+        current_channel: channelNumber.nullable(),
+        current_score: z.number().nonnegative().nullable(),
+        recommended_channel: channelNumber.nullable(),
+        advice: z.enum([
+          "KEEP",
+          "CONSIDER_CHANGE",
+          "NO_CURRENT",
+          "NOT_MODELED",
+        ]),
+      }),
+    )
+    .max(3),
+  limitations: z.array(z.string()).max(10),
+});
+export type ChannelPlan = z.infer<typeof channelPlanSchema>;
+export type BandPlan = ChannelPlan["bands"][number];
+
+export function channelAdvice(plan: BandPlan): string {
+  switch (plan.advice) {
+    case "KEEP":
+      return `Manter o canal ${plan.current_channel}: nenhum candidato é claramente menos congestionado.`;
+    case "CONSIDER_CHANGE":
+      return `Considerar o canal ${plan.recommended_channel} no roteador; o canal atual ${plan.current_channel} está mais congestionado.`;
+    case "NO_CURRENT":
+      return plan.recommended_channel == null
+        ? "Sem varreduras no período para recomendar."
+        : `O computador não está nesta banda. Canal menos congestionado: ${plan.recommended_channel}.`;
+    case "NOT_MODELED":
+      return "Banda listada apenas como observação; sem recomendação.";
+  }
+}

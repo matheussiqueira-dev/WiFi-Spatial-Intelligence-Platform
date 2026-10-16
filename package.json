@@ -12,6 +12,7 @@
     "test:web": "npm run test --workspace apps/web",
     "test:e2e": "npm run test:e2e --workspace apps/web",
     "lint": "npm run lint --workspace apps/web",
+    "format:check": "prettier --check apps/web scripts/verify",
     "build:e2e": "node scripts/verify/build-e2e.mjs"
   }
 }

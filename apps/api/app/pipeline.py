@@ -2,6 +2,7 @@ import asyncio
 import logging
 import time
 from collections import deque
+from contextlib import asynccontextmanager
 from uuid import uuid4
 
 from app.adapters.providers import build_provider
@@ -110,6 +111,13 @@ class Pipeline:
             self.latest = None
         await asyncio.to_thread(self.store.audit, f"simulation.{action}")
 
+    @asynccontextmanager
+    async def quiesced(self):
+        """Hold the control lock with an empty queue: nothing ingested commits meanwhile."""
+        async with self.control_lock:
+            await self.queue.join()
+            yield
+
     async def delete_history(self):
         async with self.control_lock:
             if self.state != "stopped":
@@ -121,23 +129,41 @@ class Pipeline:
     async def ingest(self):
         while True:
             provider = self.provider
-            generation = self.session_generation
-            event = None
-            # Network I/O must never hold the control lock (stop/pause stay responsive).
-            if provider.streaming and self.state in {"running", "paused"}:
-                event = await provider.next_event()
-            async with self.control_lock:
-                if self.state == "running" and generation == self.session_generation:
-                    if not provider.streaming:
-                        event = provider.sample()
-                    if not provider.streaming and not provider.connected:
+            try:
+                await self._ingest_once(provider)
+            except Exception:
+                # One task serves every source: a defect stops the session, never the loop.
+                logger.exception("ingest.failed")
+                async with self.control_lock:
+                    if self.provider is provider and self.state != "stopped":
                         self.state = "stopped"
-                        self.error = "Simulated sensor disconnected; start a new session."
-                    if event:
-                        await self.queue.put(
-                            (generation, self.store.segment_id, time.perf_counter(), event)
-                        )
+                        self.session_generation += 1
+                        self.error = "Source failed unexpectedly. Check backend logs."
+                try:
+                    await provider.disconnect()
+                except Exception:
+                    logger.exception("ingest.disconnect_failed")
+                await asyncio.sleep(0.5)
+                continue
             await asyncio.sleep(0.01 if provider.streaming else 0.5 / provider.config.speed)
+
+    async def _ingest_once(self, provider):
+        generation = self.session_generation
+        event = None
+        # Network I/O must never hold the control lock (stop/pause stay responsive).
+        if provider.streaming and self.state in {"running", "paused"}:
+            event = await provider.next_event()
+        async with self.control_lock:
+            if self.state == "running" and generation == self.session_generation:
+                if not provider.streaming:
+                    event = provider.sample()
+                if not provider.streaming and not provider.connected:
+                    self.state = "stopped"
+                    self.error = "Simulated sensor disconnected; start a new session."
+                if event:
+                    await self.queue.put(
+                        (generation, self.store.segment_id, time.perf_counter(), event)
+                    )
 
     async def consume(self):
         while True:

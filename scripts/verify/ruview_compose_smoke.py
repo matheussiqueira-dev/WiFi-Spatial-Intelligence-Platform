@@ -7,7 +7,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from urllib.request import Request, urlopen
+from urllib.request import ProxyHandler, Request, build_opener
 
 from dotenv import dotenv_values
 from websockets.asyncio.client import connect
@@ -33,7 +33,8 @@ def request(path, body=None):
         headers=headers,
         data=None if body is None else json.dumps(body).encode(),
     )
-    with urlopen(req, timeout=3) as response:
+    # The bearer token must never travel through an environment proxy.
+    with build_opener(ProxyHandler({})).open(req, timeout=3) as response:
         return json.load(response)
 
 

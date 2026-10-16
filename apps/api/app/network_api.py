@@ -7,8 +7,11 @@ from fastapi.responses import Response
 from sqlalchemy import Engine
 
 from app.adapters.network_store import NetworkStore
+from app.application.channel_plan import plan
 from app.application.network_diagnostics import summarize
 from app.network_contracts import (
+    ChannelPlan,
+    ChannelSurvey,
     NetworkComparison,
     NetworkConfiguration,
     NetworkReport,
@@ -31,6 +34,36 @@ def network_router(engine: Engine, dependencies: list) -> APIRouter:
             return {"inserted": store.save(sample)}
         except ValueError as error:
             raise HTTPException(409, str(error)) from error
+
+    @router.post("/channel-surveys")
+    def ingest_survey(survey: ChannelSurvey):
+        age = (datetime.now(UTC) - survey.timestamp).total_seconds()
+        if not -5 <= age <= 120:
+            raise HTTPException(422, "survey must be recent UTC host telemetry")
+        try:
+            return {"inserted": store.save_survey(survey)}
+        except ValueError as error:
+            raise HTTPException(409, str(error)) from error
+
+    @router.get("/channel-plan", response_model=ChannelPlan)
+    def channel_plan(
+        hours: float = Query(1, ge=1 / 60, le=24),
+        location: str | None = Query(None, max_length=48),
+    ):
+        now = datetime.now(UTC)
+        start = now - timedelta(hours=hours)
+        try:
+            surveys = store.read_surveys(start, now, location)
+            samples = store.read(start, now)
+        except ValueError as error:
+            raise HTTPException(422, str(error)) from error
+        connected = [
+            row
+            for row in samples
+            if row.link_state == "CONNECTED" and (location is None or row.location == location)
+        ]
+        current = connected[-1].channel if connected else None
+        return plan(surveys, current, start, now, location)
 
     @router.get("/config", response_model=NetworkConfiguration)
     def configuration():

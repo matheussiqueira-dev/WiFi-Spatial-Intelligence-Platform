@@ -45,3 +45,73 @@ test("local DST offsets convert to consecutive UTC instants, not a missing histo
     false,
   );
 });
+
+import {
+  analyticsParams,
+  collectReplay,
+  occupancyBar,
+  pageParams,
+} from "../src/lib/analytics";
+
+const filters = {
+  start: "2026-10-15T10:00",
+  end: "",
+  bucket: "minute",
+  source: "",
+  scenario: "walking",
+  segment: "",
+};
+
+test("applied analytics query freezes 'now' so pagination keeps the same window", () => {
+  const now = new Date("2026-10-15T15:00:00Z");
+  const base = analyticsParams(filters, now);
+  assert.equal(base.get("end"), "2026-10-15T15:00:00.000Z");
+  assert.equal(base.get("scenario"), "walking");
+  assert.equal(base.has("offset"), false);
+  const second = pageParams(base.toString(), 100);
+  assert.equal(second.get("end"), base.get("end"));
+  assert.equal(second.get("offset"), "100");
+  assert.equal(second.get("limit"), "100");
+});
+
+test("invalid analytics dates fail with a Portuguese message, not a RangeError", () => {
+  assert.throws(
+    () => analyticsParams({ ...filters, start: "" }),
+    /Informe a data inicial/,
+  );
+  assert.throws(
+    () => analyticsParams({ ...filters, end: "invalid" }),
+    /data final/,
+  );
+});
+
+test("replay collection stops when retention changes the selection mid-load", async () => {
+  const totals = [450, 450, 449];
+  let call = 0;
+  await assert.rejects(
+    collectReplay(async (offset) => ({
+      items: Array.from(
+        { length: Math.min(200, 450 - offset) },
+        (_, i) => offset + i,
+      ),
+      total: totals[call++],
+    })),
+    /histórico mudou durante a carga/,
+  );
+  const frames = await collectReplay(async (offset) => ({
+    items: Array.from(
+      { length: Math.min(200, 450 - offset) },
+      (_, i) => offset + i,
+    ),
+    total: 450,
+  }));
+  assert.equal(frames.length, 450);
+  assert.deepEqual(frames.slice(198, 202), [198, 199, 200, 201]);
+});
+
+test("occupancy bars never draw an unknown count as zero", () => {
+  assert.deepEqual(occupancyBar(null), { kind: "unknown", height: "100%" });
+  assert.deepEqual(occupancyBar(0), { kind: "zero", height: "0%" });
+  assert.deepEqual(occupancyBar(0.4), { kind: "value", height: "4%" });
+  assert.deepEqual(occupancyBar(10), { kind: "value", height: "50%" });
+});

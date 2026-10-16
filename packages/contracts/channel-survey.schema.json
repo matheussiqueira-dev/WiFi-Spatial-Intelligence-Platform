@@ -1,0 +1,140 @@
+{
+  "$defs": {
+    "ChannelOccupancy": {
+      "additionalProperties": false,
+      "description": "Aggregate of neighbouring access points on one channel; never an identifier.",
+      "properties": {
+        "band": {
+          "enum": [
+            "2.4GHz",
+            "5GHz",
+            "6GHz"
+          ],
+          "title": "Band",
+          "type": "string"
+        },
+        "channel": {
+          "maximum": 233,
+          "minimum": 1,
+          "title": "Channel",
+          "type": "integer"
+        },
+        "ap_count": {
+          "maximum": 500,
+          "minimum": 1,
+          "title": "Ap Count",
+          "type": "integer"
+        },
+        "strongest_signal_percent": {
+          "maximum": 100,
+          "minimum": 0,
+          "title": "Strongest Signal Percent",
+          "type": "integer"
+        },
+        "utilization_percent": {
+          "anyOf": [
+            {
+              "maximum": 100,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Utilization Percent"
+        }
+      },
+      "required": [
+        "band",
+        "channel",
+        "ap_count",
+        "strongest_signal_percent"
+      ],
+      "title": "ChannelOccupancy",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "data_class": {
+      "const": "HOST_NETWORK_TELEMETRY",
+      "default": "HOST_NETWORK_TELEMETRY",
+      "title": "Data Class",
+      "type": "string"
+    },
+    "evidence_level": {
+      "const": "L2_LIVE_UNVALIDATED",
+      "default": "L2_LIVE_UNVALIDATED",
+      "title": "Evidence Level",
+      "type": "string"
+    },
+    "source": {
+      "const": "windows-netsh-networks",
+      "default": "windows-netsh-networks",
+      "title": "Source",
+      "type": "string"
+    },
+    "survey_id": {
+      "format": "uuid",
+      "title": "Survey Id",
+      "type": "string"
+    },
+    "collector_id": {
+      "format": "uuid",
+      "title": "Collector Id",
+      "type": "string"
+    },
+    "timestamp": {
+      "format": "date-time",
+      "title": "Timestamp",
+      "type": "string"
+    },
+    "location": {
+      "default": "Computador",
+      "maxLength": 48,
+      "minLength": 1,
+      "pattern": "^[^\\W_][\\w .-]*$",
+      "title": "Location",
+      "type": "string"
+    },
+    "channels": {
+      "items": {
+        "$ref": "#/$defs/ChannelOccupancy"
+      },
+      "maxItems": 64,
+      "title": "Channels",
+      "type": "array"
+    },
+    "collector_error": {
+      "anyOf": [
+        {
+          "enum": [
+            "read_failed",
+            "unsupported_output"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Collector Error"
+    }
+  },
+  "required": [
+    "survey_id",
+    "collector_id",
+    "timestamp"
+  ],
+  "title": "ChannelSurvey",
+  "type": "object"
+}
