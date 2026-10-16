@@ -99,3 +99,15 @@ def test_default_startup_does_not_import_legacy_engine(tmp_path):
         text=True,
     )
     assert result.returncode == 0, result.stderr
+
+
+def test_providers_conform_to_the_source_ports(settings):
+    from app.adapters.native import NativeProvider
+    from app.contracts import SimulationConfig
+    from app.ports.source import SampledSource, StreamingSource
+    from app.ruview import RuViewProvider
+
+    native = NativeProvider(SimulationConfig())
+    assert isinstance(native, SampledSource) and not native.streaming
+    legacy = RuViewProvider(settings.model_copy(update={"legacy_lab_enabled": True}))
+    assert isinstance(legacy, StreamingSource) and legacy.streaming

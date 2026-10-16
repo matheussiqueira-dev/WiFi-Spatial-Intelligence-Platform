@@ -132,6 +132,9 @@ class Store:
     def model_run(self, identifier):
         return self.lab.model_run(identifier)
 
+    def model_run_count(self):
+        return self.lab.model_run_count()
+
     def job_count(self):
         return self.lab.job_count()
 

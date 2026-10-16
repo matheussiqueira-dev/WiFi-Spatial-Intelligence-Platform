@@ -52,7 +52,12 @@ class ExperimentJobs:
 
     async def submit(self, request: ExperimentRequest):
         async with self.admission:
-            if not self.accepting() or await asyncio.to_thread(self.store.job_count) >= 100:
+            # Refuse up front when run history is full; the job would only fail later.
+            if (
+                not self.accepting()
+                or await asyncio.to_thread(self.store.job_count) >= 100
+                or await asyncio.to_thread(self.store.model_run_count) >= 100
+            ):
                 raise ValueError("experiment queue or history capacity reached")
             identifier = str(uuid4())
             job = queued(identifier, request)

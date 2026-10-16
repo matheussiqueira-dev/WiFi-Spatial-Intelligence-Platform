@@ -4,10 +4,10 @@ import asyncio
 
 from fastapi import APIRouter, HTTPException, Query
 
-from app.api.deps import ContainerDep, protected
+from app.api.deps import ContainerDep, gated
 from app.rule_contracts import RuleRequest
 
-router = APIRouter(dependencies=protected)
+router = APIRouter(dependencies=gated("automation.dry_run_rules"))
 
 
 @router.post("/api/v1/automation/rules")

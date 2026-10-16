@@ -53,7 +53,20 @@ nos eventos agregados dos seis nós virtuais; usar a fonte de observação regis
 ```
 
 Guia de [analytics](docs/ANALYTICS_API.md), [backup/retenção](docs/DATA_RETENTION_AND_BACKUP.md),
-[decisões](docs/DECISIONS.md), [origem/limites clean-room](docs/ORIGINALITY_REGISTER.md).
+[decisões](docs/DECISIONS.md), [origem/limites clean-room](docs/ORIGINALITY_REGISTER.md),
+[laboratório de modelos](docs/MODEL_LAB.md), [regras dry-run](docs/AUTOMATION_DRY_RUN.md),
+[protótipo de pacotes](docs/ACQUISITION_PACKET_LAB.md) e
+[protocolo de validação RF](docs/RF_VALIDATION_PROTOCOL.md) — todos L0/sem hardware.
+
+Perfil de capacidades: `SPATIAL_CAPABILITY_PROFILE=lab` (padrão) libera tudo o que está
+implementado; `commercial-br` mantém só o grupo A (rede) e recusa com 403 presença,
+analytics espaciais, laboratório de modelos, automações e o stream ao vivo. O dashboard
+esconde esses módulos e mostra o motivo. Catálogo em `GET /api/v1/capabilities`.
+
+Stream ao vivo (`/api/v1/stream`, WebSocket): origem permitida obrigatória; o cliente
+envia `{"token": "..."}` como primeiro frame em até 5 s; o servidor responde envelopes
+`{"type": "status"|"event", "data": ...}` (status também a cada 2 s sem eventos). Até
+8 conexões; fechamentos 1008 (origem, token ou perfil) e 1013 (limite ou taxa).
 Os parágrafos de integração a seguir também documentam a compatibilidade histórica;
 para habilitá-la explicitamente, definir SPATIAL_LEGACY_LAB_ENABLED=true somente
 no laboratório local. Compose normal não exige o serviço externo.
@@ -98,7 +111,8 @@ Abra `http://127.0.0.1:3000/dashboard`. Informe o valor de `SPATIAL_TOKEN` do ar
 `.env` na tela de conexão. O token permanece apenas na memória da página: atualizar
 a página exige entrar novamente. Nunca publique ou compartilhe esse arquivo.
 
-API: `http://127.0.0.1:8000/docs`; health: `/api/v1/health`. O script aguarda a API
+API: health em `http://127.0.0.1:8000/api/v1/health`; esquema em `/openapi.json`. As páginas
+`/docs` e `/redoc` carregam scripts de CDN e só existem com `SPATIAL_API_DOCS_ENABLED=true`. O script aguarda a API
 ficar pronta e encerra somente o processo de backend que criou quando o frontend sai.
 As portas devem estar livres. Para usar outras portas:
 

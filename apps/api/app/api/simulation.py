@@ -4,16 +4,11 @@ import asyncio
 
 from fastapi import APIRouter, HTTPException, Query
 
-from app.api.deps import ContainerDep, protected
+from app.api.deps import ContainerDep, ProtectiveDenial, gated
 from app.contracts import SimulationConfig, SourceSelection
 from app.domain.acquisition import SCENARIOS
 
-router = APIRouter(dependencies=protected)
-
-
-@router.get("/api/v1/system/status")
-async def status(c: ContainerDep):
-    return c.pipeline.status()
+router = APIRouter(dependencies=gated("spatial.presence"))
 
 
 @router.get("/api/v1/events")
@@ -30,7 +25,7 @@ async def delete_events(c: ContainerDep):
     try:
         await c.pipeline.delete_history()
     except ValueError as error:
-        raise HTTPException(409, str(error)) from error
+        raise ProtectiveDenial(str(error)) from error
     return {"deleted": "L0_SYNTHETIC", "audit_preserved": True}
 
 
@@ -53,7 +48,7 @@ async def select_source(selection: SourceSelection, c: ContainerDep):
     try:
         await c.pipeline.select_source(selection.source)
     except ValueError as error:
-        raise HTTPException(409, str(error)) from error
+        raise ProtectiveDenial(str(error)) from error
     return c.pipeline.status()
 
 

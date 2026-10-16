@@ -1,5 +1,14 @@
 # Relatório de verificação
 
+## Perfil aplicado e P3 (Claude Code) — 16/10/2026
+
+| Comando / inspeção | Resultado |
+| --- | --- |
+| Red `test_capability_enforcement.py` | 11 falhas antes do enforcement (endpoints 200 em commercial-br, stream aberto, capacidade não declarada) |
+| `pytest apps/api/tests` | 253 pass |
+| `check.ps1` | exit 0: Ruff/format, 20 contratos, 253 backend, 6 launchers, Prettier, 33 web, ESLint, tsc, build, 9 E2E (34,1 s), 1 skip |
+| Docker Desktop | não iniciou (engine ausente); demo e Docker E2E não reexecutados |
+
 ## Auditoria P2/P3 e CI gratuito (Claude Code) — 15/10/2026, 22:15–22:58 Fortaleza
 
 | Comando / inspeção | Resultado |

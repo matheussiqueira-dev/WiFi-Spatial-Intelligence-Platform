@@ -1,5 +1,34 @@
 # Progresso da plataforma
 
+## Claude Code: perfil de capacidades aplicado e P3 da auditoria — 16/10/2026
+
+PR #1 mesclado na `main` (`be66f40`). Trabalho em `feat/capability-enforcement`.
+
+- **Perfil como bloqueio real:** `require_capability` (após a autenticação, 401 antes
+  de 403) nos routers de presença/simulação/eventos/sensores/ocupação, analytics,
+  laboratório de modelos, automação e rede (grupo A); stream fecha 1008 quando o perfil
+  desliga presença. Nova capacidade declarada `automation.dry_run_rules`. `/system/status`,
+  catálogo e governança seguem abertos. Dashboard carrega o catálogo no login, não abre
+  WS nem sincroniza eventos fora do perfil e mostra aviso no lugar dos módulos grupo B.
+- **P3:** `/docs`/`/redoc` (scripts de CDN) só com `SPATIAL_API_DOCS_ENABLED=true`;
+  `SPATIAL_ALLOWED_HOSTS` substitui lista fixa com `testserver`; host `ruview` só com
+  `SPATIAL_CONTAINER_NETWORK=true` (Compose); downgrades 0001/0002 recusam; fila de jobs
+  recusa (409) com histórico de runs cheio; `operation.denied` só para recusas protetivas
+  (`ProtectiveDenial`); portas `SampledSource`/`StreamingSource` com conformidade.
+- **Docs:** `.env.example` completo, README (perfil, WS, `/docs` opcional, guias antes
+  órfãos), roteiro RuView com opt-in, nota histórica no relatório v3, nome corrigido em
+  README_IMPORTANTE. `.gitattributes` (`eol=lf`) evita CRLF em checkouts Windows, que
+  quebravam o gate do Prettier.
+- Testes novos: enforcement por perfil (27), config (4), políticas (4), conformidade (1),
+  helper web (1).
+
+Gate `check.ps1` exit 0: Ruff/format, 20 contratos, 253 backend, 6 launchers, Prettier,
+33 web, ESLint, tsc, build e 9 E2E Chromium (34,1 s), 1 skipped. Perfil `commercial-br`
+coberto por testes de API; não houve E2E de navegador nesse perfil.
+Pendente: reconstruir a demo Docker (Docker Desktop não iniciou nesta sessão — abrir pela
+interface); fixar imagens por digest; histórico de regras (migração); tipagem Python;
+NVDA/WebKit.
+
 ## Claude Code: modularização do backend — 15/10/2026, 23:44–00:10
 
 Feita após confirmação de que a sessão Codex estava parada (sem edições havia 10 min);

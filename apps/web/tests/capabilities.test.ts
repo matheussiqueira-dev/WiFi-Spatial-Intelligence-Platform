@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { readFileSync } from "node:fs";
-import { capabilityCatalogSchema } from "../src/lib/capabilities";
+import {
+  capabilityCatalogSchema,
+  enabledCapabilities,
+} from "../src/lib/capabilities";
 import { channelAdvice, channelPlanSchema } from "../src/lib/network";
 
 test("capability catalog fixture parses and keeps blocked identity disabled", () => {
@@ -74,4 +77,31 @@ test("channel plan schema and advice text", () => {
     }).success,
     false,
   );
+});
+
+test("enabled set follows the profile and never contains blocked identity", () => {
+  const catalog = capabilityCatalogSchema.parse(
+    JSON.parse(
+      readFileSync(
+        new URL(
+          "../../../packages/contracts/capability-catalog.example.json",
+          import.meta.url,
+        ),
+        "utf8",
+      ),
+    ),
+  );
+  const enabled = enabledCapabilities(catalog);
+  assert.equal(enabled.has("network.link_diagnostics"), true);
+  assert.equal(enabled.has("identity.rf_reidentification"), false);
+  const commercial = enabledCapabilities({
+    ...catalog,
+    profile: "commercial-br",
+    capabilities: catalog.capabilities.map((item) => ({
+      ...item,
+      enabled: item.enabled && item.profiles.includes("commercial-br"),
+    })),
+  });
+  assert.equal(commercial.has("spatial.presence"), false);
+  assert.equal(commercial.has("network.channel_plan"), true);
 });

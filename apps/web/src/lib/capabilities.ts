@@ -61,3 +61,10 @@ export const capabilityCatalogSchema = z.object({
     .max(200),
 });
 export type CapabilityCatalog = z.infer<typeof capabilityCatalogSchema>;
+
+/** Capabilities the active profile enables; the API refuses the others with 403. */
+export function enabledCapabilities(catalog: CapabilityCatalog) {
+  return new Set(
+    catalog.capabilities.filter((item) => item.enabled).map((item) => item.id),
+  );
+}

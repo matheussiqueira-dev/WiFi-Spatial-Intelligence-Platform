@@ -1,5 +1,18 @@
 # Decisões de arquitetura — v3.0
 
+## ADR-012 — Perfil de capacidades aplicado na borda HTTP/WS
+
+Status: Accepted. Data: 16/10/2026. Complementa a seção 0A do plano v4.
+
+- O catálogo deixa de ser só informativo: cada router declara a capacidade que expõe e
+  `require_capability` recusa com 403 quando o perfil ativo a desliga. A verificação
+  roda depois de `authorize`, para não revelar o perfil a clientes sem token.
+- Superfícies operacionais (status, catálogo, governança, health) ficam abertas em todo
+  perfil; o status contém apenas estado sintético e é necessário ao login do dashboard.
+- O frontend lê o catálogo no login e omite módulos desligados, mas a fonte de verdade é
+  o backend. Capacidade nova sem entrada no catálogo falha na importação do router.
+- Etiquetas regulatórias continuam hipóteses de trabalho, não parecer jurídico.
+
 ## ADR-011 — Composition root, routers por contexto e repositórios SQLite
 
 Status: Accepted. Data: 15/10/2026. Complementa ADR-001.

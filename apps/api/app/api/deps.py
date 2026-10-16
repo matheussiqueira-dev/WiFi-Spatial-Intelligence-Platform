@@ -6,8 +6,16 @@ from fastapi import Depends, HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.bootstrap import Container
+from app.capabilities import declared, is_enabled
 
 bearer = HTTPBearer(auto_error=False)
+
+
+class ProtectiveDenial(HTTPException):
+    """A refusal that protects data or resources; audited as operation.denied."""
+
+    def __init__(self, detail: str):
+        super().__init__(409, detail)
 
 
 def get_container(request: Request) -> Container:
@@ -43,3 +51,20 @@ async def authorize(
 
 
 protected = [Depends(authorize)]
+
+
+def require_capability(capability_id: str):
+    """Refuse a surface the active profile disables; listed after authorize (401 first)."""
+    if not declared(capability_id):
+        raise ValueError(f"undeclared capability {capability_id}")
+
+    def check(request: Request):
+        profile = request.app.state.container.settings.capability_profile
+        if not is_enabled(capability_id, profile):
+            raise HTTPException(403, f"capability {capability_id} is disabled in profile {profile}")
+
+    return Depends(check)
+
+
+def gated(capability_id: str) -> list:
+    return [*protected, require_capability(capability_id)]

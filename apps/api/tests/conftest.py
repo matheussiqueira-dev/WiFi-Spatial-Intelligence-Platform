@@ -20,7 +20,12 @@ def isolated_environment(monkeypatch):
 
 @pytest.fixture
 def settings(tmp_path):
-    return Settings(token=TOKEN, database_url=f"sqlite:///{tmp_path / 'test.db'}", _env_file=None)
+    return Settings(
+        token=TOKEN,
+        database_url=f"sqlite:///{tmp_path / 'test.db'}",
+        allowed_hosts=["127.0.0.1", "localhost", "testserver"],
+        _env_file=None,
+    )
 
 
 @pytest.fixture

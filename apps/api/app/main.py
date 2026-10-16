@@ -13,7 +13,7 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from app.api import analytics, automation, catalog, model_lab, simulation, stream
-from app.api.deps import protected
+from app.api.deps import ProtectiveDenial, gated
 from app.bootstrap import Container, build_container
 from app.config import Settings
 from app.network_api import network_router
@@ -71,7 +71,14 @@ def create_app(settings: Settings | None = None):
     # Configure logging here, not at import time, so importing the module has no side effects.
     logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
     c = build_container(settings or Settings())
-    app = FastAPI(title="WiFi Spatial Intelligence API", version="0.1.0", lifespan=lifespan_for(c))
+    docs = c.settings.api_docs_enabled
+    app = FastAPI(
+        title="WiFi Spatial Intelligence API",
+        version="0.1.0",
+        lifespan=lifespan_for(c),
+        docs_url="/docs" if docs else None,
+        redoc_url="/redoc" if docs else None,
+    )
     app.state.container = c
     app.state.pipeline = c.pipeline
     app.state.store = c.store
@@ -89,13 +96,12 @@ def create_app(settings: Settings | None = None):
 
     @app.exception_handler(HTTPException)
     async def record_operation_denial(request, error):
-        if error.status_code == 409:
+        # Invalid transitions (pause while stopped) are not security events.
+        if isinstance(error, ProtectiveDenial):
             await asyncio.to_thread(c.store.security_denial, "operation.denied")
         return await http_exception_handler(request, error)
 
-    app.add_middleware(
-        TrustedHostMiddleware, allowed_hosts=["127.0.0.1", "localhost", "testserver", "api"]
-    )
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=c.settings.allowed_hosts)
     app.add_middleware(BodyLimit)
     app.add_middleware(
         CORSMiddleware,
@@ -105,7 +111,7 @@ def create_app(settings: Settings | None = None):
         allow_credentials=False,
     )
 
-    app.include_router(network_router(c.store.engine, protected))
+    app.include_router(network_router(c.store.engine, gated("network.link_diagnostics")))
     for module in (automation, model_lab, analytics):
         app.include_router(module.router)
     app.include_router(catalog.public)

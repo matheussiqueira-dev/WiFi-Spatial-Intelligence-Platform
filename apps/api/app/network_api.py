@@ -7,6 +7,7 @@ from fastapi.responses import Response
 from sqlalchemy import Engine
 
 from app.adapters.network_store import NetworkStore
+from app.api.deps import require_capability
 from app.application.channel_plan import plan
 from app.application.network_diagnostics import summarize
 from app.network_contracts import (
@@ -35,7 +36,9 @@ def network_router(engine: Engine, dependencies: list) -> APIRouter:
         except ValueError as error:
             raise HTTPException(409, str(error)) from error
 
-    @router.post("/channel-surveys")
+    channel = [require_capability("network.channel_plan")]
+
+    @router.post("/channel-surveys", dependencies=channel)
     def ingest_survey(survey: ChannelSurvey):
         age = (datetime.now(UTC) - survey.timestamp).total_seconds()
         if not -5 <= age <= 120:
@@ -45,7 +48,7 @@ def network_router(engine: Engine, dependencies: list) -> APIRouter:
         except ValueError as error:
             raise HTTPException(409, str(error)) from error
 
-    @router.get("/channel-plan", response_model=ChannelPlan)
+    @router.get("/channel-plan", response_model=ChannelPlan, dependencies=channel)
     def channel_plan(
         hours: float = Query(1, ge=1 / 60, le=24),
         location: str | None = Query(None, max_length=48),
