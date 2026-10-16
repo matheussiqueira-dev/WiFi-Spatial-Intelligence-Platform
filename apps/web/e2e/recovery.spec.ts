@@ -11,6 +11,12 @@ test("operator can pause and stop with an invalid draft configuration", async ({
   page,
   request,
 }) => {
+  // Specs share one API: start from a stopped session whatever ran before.
+  const stopped = await request.post(
+    "http://127.0.0.1:4810/api/v1/simulation/stop",
+    { headers: { Authorization: `Bearer ${token}` } },
+  );
+  expect(stopped.ok()).toBe(true);
   await page.goto("/dashboard");
   await page.getByLabel("Token de acesso local").fill(token);
   await page.getByRole("button", { name: "Conectar", exact: true }).click();

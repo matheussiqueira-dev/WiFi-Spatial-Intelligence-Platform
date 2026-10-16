@@ -90,8 +90,11 @@ class Pipeline:
             self.dropped = 0
             self.delivery_attempts = 0
         elif action == "pause" and self.state == "running":
-            self.state = "paused"
+            # The new generation already stops enqueueing; report "paused" only once the
+            # queued events are persisted, so observers never see writes after "paused".
             self.session_generation += 1
+            await self.queue.join()
+            self.state = "paused"
         elif action == "resume" and self.state == "paused":
             self.session_generation += 1
             self.state = "running"
