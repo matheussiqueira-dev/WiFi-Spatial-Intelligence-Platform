@@ -7,6 +7,7 @@ import sys
 commands = [
     ["ruff", "check", "apps/api", "scripts/verify", "scripts/network"],
     ["ruff", "format", "--check", "apps/api", "scripts/verify", "scripts/network"],
+    ["mypy", "--config-file", "apps/api/pyproject.toml", "apps/api/app"],
     ["pytest", "apps/api/tests", "-q"],
     ["pytest", "scripts/verify/tests", "-q"],
     ["pip_audit", "-r", "apps/api/requirements.runtime.txt"],

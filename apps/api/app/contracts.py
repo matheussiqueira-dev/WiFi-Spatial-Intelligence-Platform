@@ -5,6 +5,7 @@ from typing import Annotated, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic.config import JsonDict
 
 Scenario = Literal[
     "empty",
@@ -19,7 +20,7 @@ Scenario = Literal[
 RoomX = Annotated[float, Field(ge=0, le=8)]
 RoomY = Annotated[float, Field(ge=0, le=6)]
 # Published form of the runtime presence/count rule; count == len(positions) stays runtime-only.
-PRESENCE_MATCHES_COUNT = {
+PRESENCE_MATCHES_COUNT: JsonDict = {
     "if": {"properties": {"presence_detected": {"const": True}}, "required": ["presence_detected"]},
     "then": {"properties": {"occupancy_estimate": {"minimum": 1}}},
     "else": {"properties": {"occupancy_estimate": {"maximum": 0}}},
@@ -87,7 +88,7 @@ class SensingEvent(StrictModel):
 
     @model_validator(mode="after")
     def coherent_observation(self):
-        if self.timestamp.utcoffset() is None or self.timestamp.utcoffset().total_seconds() != 0:
+        if (offset := self.timestamp.utcoffset()) is None or offset.total_seconds() != 0:
             raise ValueError("timestamp must be timezone-aware UTC")
         if self.measurements.presence_detected != (self.measurements.occupancy_estimate > 0):
             raise ValueError("inconsistent synthetic presence")
@@ -144,7 +145,7 @@ class RuViewEvent(StrictModel):
 
     @model_validator(mode="after")
     def synthetic_only(self):
-        if self.timestamp.utcoffset() is None or self.timestamp.utcoffset().total_seconds() != 0:
+        if (offset := self.timestamp.utcoffset()) is None or offset.total_seconds() != 0:
             raise ValueError("timestamp must be timezone-aware UTC")
         count = self.measurements.occupancy_estimate
         if count is not None and self.measurements.presence_detected != (count > 0):
@@ -154,16 +155,18 @@ class RuViewEvent(StrictModel):
 
 class NativeProvenance(Provenance):
     # Stricter than legacy 1.0.0, whose stored payloads keep their historical tolerance.
-    generator: Literal["synthetic-native"] = "synthetic-native"
+    generator: Literal["synthetic-native"] = "synthetic-native"  # type: ignore[assignment]
     seed: int = Field(ge=0, le=2**32 - 1)
     scenario: Scenario
     dataset_id: None = None
 
 
 class NativeEvent(SensingEvent):
-    schema_version: Literal["2.0.0"] = "2.0.0"
-    source_id: Literal["native-01"] = "native-01"
-    event_type: Literal["synthetic.spatial.observation"] = "synthetic.spatial.observation"
+    # Contract 2.0.0 deliberately replaces the 1.x literals (additive versioning, ADR);
+    # pydantic validates the narrowed field, mypy only sees an incompatible override.
+    schema_version: Literal["2.0.0"] = "2.0.0"  # type: ignore[assignment]
+    source_id: Literal["native-01"] = "native-01"  # type: ignore[assignment]
+    event_type: Literal["synthetic.spatial.observation"] = "synthetic.spatial.observation"  # type: ignore[assignment]
     provider: Literal["synthetic-native"] = "synthetic-native"
     provenance: NativeProvenance
 

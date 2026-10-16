@@ -4,7 +4,7 @@ import csv
 import io
 import logging
 from datetime import UTC, datetime, timedelta
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import Field, TypeAdapter, ValidationError, model_validator
 
@@ -29,7 +29,7 @@ class AnalyticsQuery(StrictModel):
     @model_validator(mode="after")
     def bounded_utc(self):
         for value in (self.start, self.end):
-            if value.utcoffset() is None or value.utcoffset().total_seconds() != 0:
+            if (offset := value.utcoffset()) is None or offset.total_seconds() != 0:
                 raise ValueError("start/end must be timezone-aware UTC")
         if not timedelta(0) < self.end - self.start <= timedelta(days=31):
             raise ValueError("range must be positive and at most 31 days")
@@ -117,8 +117,8 @@ def replay(rows, query):
 def aggregate(rows, query):
     events, invalid = validated_rows(rows)
     seconds = {"minute": 60, "five_minutes": 300, "hour": 3600, "day": 86400}[query.bucket]
-    buckets = {}
-    previous = {}
+    buckets: dict[tuple[int, str], dict] = {}
+    previous: dict[tuple[str, str], Any] = {}
     intervals = []
     transitions = []
     latencies = []

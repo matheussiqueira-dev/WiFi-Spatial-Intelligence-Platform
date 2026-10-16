@@ -11,6 +11,9 @@ from app.contracts import StrictModel
 Location = Annotated[str, Field(min_length=1, max_length=48, pattern=r"^[^\W_][\w .-]*$")]
 
 
+Advice = Literal["KEEP", "CONSIDER_CHANGE", "NO_CURRENT", "NOT_MODELED"]
+
+
 class NetworkConfiguration(StrictModel):
     location: Location = "Computador"
 
@@ -51,7 +54,7 @@ class NetworkSample(StrictModel):
 
     @model_validator(mode="after")
     def coherent(self):
-        if self.timestamp.utcoffset() is None or self.timestamp.utcoffset().total_seconds() != 0:
+        if (offset := self.timestamp.utcoffset()) is None or offset.total_seconds() != 0:
             raise ValueError("UTC timestamp required")
         if len(self.probe_rtt_ms) > self.probe_sent:
             raise ValueError("replies cannot exceed sent probes")
@@ -136,7 +139,7 @@ class ChannelSurvey(StrictModel):
 
     @model_validator(mode="after")
     def coherent(self):
-        if self.timestamp.utcoffset() is None or self.timestamp.utcoffset().total_seconds() != 0:
+        if (offset := self.timestamp.utcoffset()) is None or offset.total_seconds() != 0:
             raise ValueError("UTC timestamp required")
         if len({(row.band, row.channel) for row in self.channels}) != len(self.channels):
             raise ValueError("channel entries must be unique per band")
@@ -158,7 +161,7 @@ class BandPlan(StrictModel):
     current_channel: int | None
     current_score: float | None
     recommended_channel: int | None
-    advice: Literal["KEEP", "CONSIDER_CHANGE", "NO_CURRENT", "NOT_MODELED"]
+    advice: Advice
 
 
 class ChannelPlan(StrictModel):

@@ -12,7 +12,7 @@ build-backend = "setuptools.build_meta"
 include = ["app*"]
 
 [project.optional-dependencies]
-dev = ["pytest", "httpx2", "ruff", "pip-audit"]
+dev = ["pytest", "httpx2", "ruff", "pip-audit", "mypy"]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
@@ -23,3 +23,12 @@ line-length = 100
 
 [tool.ruff.lint]
 select = ["E", "F", "I"]
+
+[tool.mypy]
+python_version = "3.12"
+files = ["app"]
+plugins = ["pydantic.mypy"]
+check_untyped_defs = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+ignore_missing_imports = true

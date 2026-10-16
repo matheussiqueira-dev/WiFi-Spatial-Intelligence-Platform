@@ -1,5 +1,27 @@
 # Progresso da plataforma
 
+## Claude Code: pendências do PR #6 concluídas — 16/10/2026
+
+- **Imagens por digest:** `python:3.12-slim`, `node:22-slim` e o `Dockerfile.verify`
+  (3.12 padrão, 3.13 por argumento) fixados pelo digest do índice multi-arquitetura;
+  Dependabot ganha o ecossistema `docker`.
+- **Histórico de regras (contracts-data-13):** migração 0009 com `created_at`/`revoked_at`
+  e `audit_events.subject_id`; API e contrato Zod expõem os horários, o painel mostra
+  "criada … · revogada …" ou "criação anterior ao histórico" (NULL não é inventado).
+- **Tipagem:** mypy 2.4.0 (dev; lock regenerado só com adições) no `check.ps1`, no
+  `linux_checks.py` e no CI; 62 erros corrigidos (anotações, `row_count`, estreitamento de
+  `utcoffset`, porta `StreamingSource` no pipeline, tipo `Advice` compartilhado).
+- **E2E:** WebKit voltou a executar no Windows e entrou no gate/CI; bug real corrigido
+  (token digitado antes da hidratação não chegava ao estado React → 401). Novo spec do
+  perfil `commercial-br` via `E2E_PROFILE`.
+- Demo Docker reconstruída com imagens fixadas: Alembic 0009, 10.000 eventos preservados
+  (cópia do volume antes da migração, fora do repositório).
+
+Comandos: `pytest`, `mypy`, `ruff`, `npm.cmd run build:e2e`, `E2E_BROWSERS=chromium,webkit`
+e `E2E_PROFILE=commercial-br npm.cmd run test:e2e`, `docker compose up --build --detach
+--wait`, `Dockerfile.verify` 3.13 e `check.ps1` (resultados em VERIFICATION_REPORT).
+Pendente: NVDA (leitor de tela não instalado, validação manual); Firefox fora do gate.
+
 ## Claude Code: perfil de capacidades aplicado e P3 da auditoria — 16/10/2026
 
 PR #1 mesclado na `main` (`be66f40`). Trabalho em `feat/capability-enforcement`.

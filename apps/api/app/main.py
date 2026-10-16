@@ -54,7 +54,7 @@ def lifespan_for(c: Container):
             yield
         finally:
             await c.experiment_jobs.close()
-            if c.backup_worker:
+            if c.backup_worker and backup_task:
                 c.backup_worker.stop.set()
                 await backup_task
             await c.pipeline.close()

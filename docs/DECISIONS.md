@@ -1,5 +1,19 @@
 # Decisões de arquitetura — v3.0
 
+## ADR-013 — Histórico de regras, tipagem verificada e imagens fixadas
+
+Status: Accepted. Data: 16/10/2026. Fecha contracts-data-13 e pendências do PR #6.
+
+- Migração 0009 adiciona `local_rules.created_at/revoked_at` e `audit_events.subject_id`
+  (anuláveis). Regras anteriores ficam com NULL: o horário real é desconhecido e não é
+  inventado; a UI diz "criação anterior ao histórico". Revogar de novo mantém o primeiro
+  horário e não duplica auditoria. `subject_id` guarda só o ID do registro afetado.
+- mypy (MIT, plugin pydantic) roda no gate e no CI com `check_untyped_defs` sobre `app/`.
+  Os `type: ignore[assignment]` em `contracts.py` são o estreitamento deliberado dos
+  literais do contrato 2.0.0; `warn_unused_ignores` impede ignorar além disso.
+- Imagens base fixadas pelo digest do índice multi-arquitetura; atualização só por PR
+  revisado (Dependabot `docker`). O digest 3.13 do `Dockerfile.verify` é argumento.
+
 ## ADR-012 — Perfil de capacidades aplicado na borda HTTP/WS
 
 Status: Accepted. Data: 16/10/2026. Complementa a seção 0A do plano v4.

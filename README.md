@@ -178,11 +178,13 @@ O Compose deste MVP foi configurado para uso local, sem exposição na rede.
 ## Verificação
 
 ```powershell
-npm.cmd exec --workspace apps/web -- playwright install chromium
+npm.cmd exec --workspace apps/web -- playwright install chromium webkit
 .\scripts\verify\check.ps1
 ```
 
-O runner usa uma API nova em 4810, build de produção em 4310 e um SQLite temporário
+`check.ps1` roda os specs em Chromium e WebKit (`-Browsers chromium` restringe) com o
+perfil `lab` e, em seguida, o spec do perfil `commercial-br` (`E2E_PROFILE`), que
+confere no navegador que nenhum stream ou dado espacial é pedido. O runner usa uma API nova em 4810, build de produção em 4310 e um SQLite temporário
 exclusivo. Ele recusa reutilizar servidores existentes. Não toca no histórico de uso.
 O build para E2E aponta para 4810; para execução de produção manual, reconstrua com
 `npm.cmd run build` para restaurar o endereço padrão ou defina `NEXT_PUBLIC_API_URL`.
@@ -193,6 +195,7 @@ Comandos individuais:
 .\apps\api\.venv\Scripts\python.exe -m pytest apps/api/tests -q
 .\apps\api\.venv\Scripts\python.exe -m ruff check apps/api scripts/verify
 .\apps\api\.venv\Scripts\python.exe -m ruff format --check apps/api scripts/verify
+.\apps\api\.venv\Scripts\python.exe -m mypy --config-file apps/api/pyproject.toml apps/api/app
 npm.cmd run lint
 npm.cmd run format:check
 npm.cmd run typecheck
@@ -212,7 +215,9 @@ modo externo sem essas variáveis explícitas, recusam a porta 8000 e conferem n
 que a porta pertence ao projeto isolado antes de apagar qualquer dado.
 
 CI gratuito em `.github/workflows/ci.yml` (runners Linux): backend 3.12/3.13 com
-`linux_checks.py`, web, E2E Chromium, Gitleaks e npm audit. `.pre-commit-config.yaml`
+`linux_checks.py` (Ruff, mypy, testes, pip-audit), web, E2E Chromium + WebKit nos
+perfis `lab` e `commercial-br`, Gitleaks e npm audit. Imagens base dos Dockerfiles são
+fixadas por digest multi-arquitetura; o Dependabot propõe atualizações (também `docker`). `.pre-commit-config.yaml`
 é opcional (`pip install pre-commit`) e não substitui `check.ps1`.
 
 ## Organização

@@ -237,17 +237,20 @@ export default function Dashboard() {
 
   async function authenticate(event: React.FormEvent) {
     event.preventDefault();
+    // Text typed before hydration is in the field but never reached onChange; the
+    // field (no name attribute, so never serialized into a URL) is the source of truth.
+    const submitted = tokenInput.current?.value ?? inputToken;
     setBusy(true);
     setError("");
     try {
       const [next, catalog] = await Promise.all([
-        request("/system/status", inputToken, statusSchema),
-        request("/capabilities", inputToken, capabilityCatalogSchema),
+        request("/system/status", submitted, statusSchema),
+        request("/capabilities", submitted, capabilityCatalogSchema),
       ]);
       setStatus(next);
       setAllowed(enabledCapabilities(catalog));
       pendingFocus.current = "workspace";
-      setToken(inputToken);
+      setToken(submitted);
       setInputToken("");
     } catch (e) {
       setError(

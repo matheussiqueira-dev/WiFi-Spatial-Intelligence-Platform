@@ -66,7 +66,7 @@ jobs:
       - run: npm run build
 
   e2e:
-    name: E2E (Chromium, real API + temporary SQLite)
+    name: E2E (Chromium + WebKit, lab and commercial-br, real API + temporary SQLite)
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     needs: [backend, web]
@@ -89,12 +89,20 @@ jobs:
           python -m venv apps/api/.venv
           apps/api/.venv/bin/python -m pip install -r apps/api/requirements.lock.txt
       - run: npm ci
-      - run: npx --workspace apps/web playwright install --with-deps chromium
+      - run: npx --workspace apps/web playwright install --with-deps chromium webkit
       - run: npm run build:e2e
-      - name: End-to-end tests
+      - name: End-to-end tests (Chromium + WebKit, lab profile)
         run: npm run test:e2e
         env:
           E2E_RUVIEW: "0"
+          E2E_BROWSERS: chromium,webkit
+          E2E_PROFILE: lab
+      - name: End-to-end tests (commercial-br profile)
+        run: npm run test:e2e
+        env:
+          E2E_RUVIEW: "0"
+          E2E_BROWSERS: chromium
+          E2E_PROFILE: commercial-br
       - name: Playwright report on failure
         if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

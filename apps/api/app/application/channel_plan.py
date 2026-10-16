@@ -6,6 +6,7 @@ from statistics import mean
 from typing import Sequence
 
 from app.network_contracts import (
+    Advice,
     Band,
     BandPlan,
     ChannelOccupancy,
@@ -124,6 +125,7 @@ def plan(
         )
         best = candidates[0]
         current_score = score(current) if current is not None and valid else None
+        advice: Advice
         if current is None or current_score is None:
             advice, recommended = "NO_CURRENT", best.channel if valid else None
         elif current_score - best.interference_score >= CHANGE_MARGIN:

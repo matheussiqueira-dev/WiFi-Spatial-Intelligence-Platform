@@ -23,8 +23,8 @@ class RecurringBackup:
         self.stop = asyncio.Event()
         self.running = False
         self.successes = 0
-        self.last_success = None
-        self.last_error = None
+        self.last_success: str | None = None
+        self.last_error: str | None = None
 
     def status(self):
         return {

@@ -34,7 +34,7 @@ async def stream(ws: WebSocket):
         await asyncio.to_thread(store.security_denial, "ws.rate_denied")
         await ws.close(code=1013)
         return
-    queue = asyncio.Queue(maxsize=16)
+    queue: asyncio.Queue[dict] = asyncio.Queue(maxsize=16)
     handshake = object()
     handshakes.add(handshake)
     receiver = None

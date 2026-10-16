@@ -4,9 +4,9 @@ import json
 from datetime import UTC, datetime
 from uuid import uuid4
 
-from sqlalchemy import func, select
+from sqlalchemy import select
 
-from app.adapters.sqlite.database import Database
+from app.adapters.sqlite.database import Database, row_count
 from app.adapters.sqlite.models import LocalRuleRow, RuleDecisionRow, audit_row
 from app.domain.rules import MAX_DECISIONS, MAX_RULES, RuleSpec, matches
 
@@ -16,7 +16,7 @@ def record_decisions(session, event) -> None:
     rules = session.scalars(select(LocalRuleRow).where(LocalRuleRow.active)).all()
     if not rules:
         return
-    available = MAX_DECISIONS - session.scalar(select(func.count()).select_from(RuleDecisionRow))
+    available = MAX_DECISIONS - row_count(session, RuleDecisionRow)
     for rule in rules[: max(0, available)]:
         decision = {
             "rule_id": rule.id,
@@ -38,38 +38,46 @@ def record_decisions(session, event) -> None:
         )
 
 
+def rule_view(row: LocalRuleRow) -> dict:
+    return {
+        "id": row.id,
+        "active": row.active,
+        "version": 1,
+        "mode": "DRY_RUN",
+        "created_at": row.created_at,
+        "revoked_at": row.revoked_at,
+        **json.loads(row.payload),
+    }
+
+
 class RuleRepository:
     def __init__(self, database: Database):
         self.session = database.session
 
     def create_rule(self, specification):
         with self.session.begin() as session:
-            if session.scalar(select(func.count()).select_from(LocalRuleRow)) >= MAX_RULES:
+            if row_count(session, LocalRuleRow) >= MAX_RULES:
                 raise ValueError(f"maximum {MAX_RULES} rules; review offline retention")
-            identifier = str(uuid4())
-            session.add(LocalRuleRow(id=identifier, active=True, payload=json.dumps(specification)))
-            session.add(audit_row("automation.rule.created"))
-        return {"id": identifier, "active": True, "version": 1, "mode": "DRY_RUN", **specification}
+            row = LocalRuleRow(
+                id=str(uuid4()),
+                active=True,
+                payload=json.dumps(specification),
+                created_at=datetime.now(UTC).isoformat(),
+            )
+            session.add(row)
+            session.add(audit_row("automation.rule.created", row.id))
+            return rule_view(row)
 
     def local_rules(self):
         with self.session() as session:
             return {
                 "items": [
-                    {
-                        "id": r.id,
-                        "active": r.active,
-                        "version": 1,
-                        "mode": "DRY_RUN",
-                        **json.loads(r.payload),
-                    }
+                    rule_view(r)
                     for r in session.scalars(select(LocalRuleRow).order_by(LocalRuleRow.id))
                 ],
                 "maximum_rules": MAX_RULES,
                 "maximum_decisions": MAX_DECISIONS,
-                "decision_capacity_reached": session.scalar(
-                    select(func.count()).select_from(RuleDecisionRow)
-                )
-                >= MAX_DECISIONS,
+                "decision_capacity_reached": row_count(session, RuleDecisionRow) >= MAX_DECISIONS,
             }
 
     def revoke_rule(self, identifier):
@@ -77,8 +85,11 @@ class RuleRepository:
             rule = session.get(LocalRuleRow, identifier)
             if rule is None:
                 return False
-            rule.active = False
-            session.add(audit_row("automation.rule.revoked"))
+            if rule.active:
+                # Revoking twice keeps the first revocation time and audits it once.
+                rule.active = False
+                rule.revoked_at = datetime.now(UTC).isoformat()
+                session.add(audit_row("automation.rule.revoked", rule.id))
         return True
 
     def rule_decisions(self, limit, offset):
@@ -93,7 +104,7 @@ class RuleRepository:
                 "items": [
                     {"id": r.id, "created_at": r.created_at, **json.loads(r.payload)} for r in rows
                 ],
-                "total": session.scalar(select(func.count()).select_from(RuleDecisionRow)),
+                "total": row_count(session, RuleDecisionRow),
                 "limit": limit,
                 "offset": offset,
             }

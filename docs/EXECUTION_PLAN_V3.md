@@ -371,7 +371,7 @@ atual antes de executar; exemplos abaixo correspondem à inspeção deste roteir
 | E2E e persistência Docker nativos | `& scripts/verify/docker-e2e.ps1` |
 | Persistência Docker sem browser | `& scripts/verify/docker-e2e.ps1 -SkipBrowser` |
 | Laboratório legado opt-in | `& scripts/verify/check.ps1 -RuView -RuViewHttpPort 4970 -RuViewWsPort 4971` |
-| Build atualizado Python 3.13 | `docker build --build-arg PYTHON_VERSION=3.13 -f apps/api/Dockerfile.verify -t wifi-spatial-backend-verification-py313 .` |
+| Build atualizado Python 3.13 | `docker build --build-arg PYTHON_VERSION=3.13 --build-arg PYTHON_DIGEST=<digest 3.13 do Dockerfile.verify> -f apps/api/Dockerfile.verify -t wifi-spatial-backend-verification-py313 .` |
 | Ruff/testes/auditorias Python 3.13 | `docker run --rm wifi-spatial-backend-verification-py313` |
 | Auditoria npm | `npm.cmd audit --json` |
 | Inventário ambiente/browser | `node scripts/verify/inventory.mjs` |

@@ -33,7 +33,7 @@ def extract_window(points: list[tuple[float, float, float]]) -> float | None:
 def prepare_dataset(seed: int):
     if not 0 <= seed <= 100000:
         raise ValueError("unsupported dataset seed")
-    dataset = {name: [] for name in ("train", "validation", "test")}
+    dataset: dict[str, list] = {name: [] for name in ("train", "validation", "test")}
     for split_index, split in enumerate(dataset):
         for session in range(8):
             reference = "walking" if session % 2 else "stationary"
@@ -45,6 +45,8 @@ def prepare_dataset(seed: int):
                 points = []
                 for tick in range(first_tick, first_tick + 8):
                     frame = scene.sample(tick)
+                    if frame is None:
+                        raise RuntimeError("reference scenes never drop frames")
                     x, y = frame.positions[0]
                     points.append((tick * spacing, x, y))
                 # A missing observation tests abstention, never a fabricated RF quality.
