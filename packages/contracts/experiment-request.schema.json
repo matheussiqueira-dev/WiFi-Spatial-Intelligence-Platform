@@ -1,0 +1,14 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "seed": {
+      "default": 42,
+      "maximum": 100000,
+      "minimum": 0,
+      "title": "Seed",
+      "type": "integer"
+    }
+  },
+  "title": "ExperimentRequest",
+  "type": "object"
+}

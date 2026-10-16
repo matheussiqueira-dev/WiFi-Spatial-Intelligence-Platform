@@ -1,0 +1,17 @@
+{
+  "name": "wifi-spatial-intelligence-platform",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/web"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace apps/web",
+    "build": "npm run build --workspace apps/web",
+    "typecheck": "npm run typecheck --workspace apps/web",
+    "test:web": "npm run test --workspace apps/web",
+    "test:e2e": "npm run test:e2e --workspace apps/web",
+    "lint": "npm run lint --workspace apps/web",
+    "build:e2e": "node scripts/verify/build-e2e.mjs"
+  }
+}

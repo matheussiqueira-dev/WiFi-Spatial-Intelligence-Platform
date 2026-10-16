@@ -1,0 +1,21 @@
+services:
+  ruview:
+    # Official image pinned by digest; inspected and exercised on 2026-10-14.
+    image: ruvnet/wifi-densepose@sha256:bd2b2648a75ffb498a8e001b54c957c1f853d2ee709e16986d38f88676186d14
+    environment:
+      CSI_SOURCE: simulated
+      SENSING_ALLOWED_HOSTS: ruview
+      RUVIEW_API_TOKEN: ${SPATIAL_RUVIEW_TOKEN:?Run scripts/dev/start-ruview.ps1 first}
+    # The official entrypoint supplies --source from CSI_SOURCE; do not repeat it.
+    ports:
+      - "127.0.0.1:${RUVIEW_HTTP_PORT:-4860}:3000"
+      - "127.0.0.1:${RUVIEW_WS_PORT:-4861}:3001"
+    user: "65534:65534"
+    read_only: true
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=64m"]
+    cap_drop: ["ALL"]
+    security_opt: ["no-new-privileges:true"]
+    init: true
+    logging:
+      driver: json-file
+      options: { max-size: "2m", max-file: "3" }

@@ -1,0 +1,17 @@
+# Used only with the fixed wifi-spatial-f2-compose-verification project.
+services:
+  api:
+    ports: !override
+      - "127.0.0.1:4880:8000"
+    environment:
+      SPATIAL_ORIGINS: '["http://127.0.0.1:4380"]'
+  web:
+    ports: !override
+      - "127.0.0.1:4380:3000"
+    build:
+      args:
+        NEXT_PUBLIC_API_URL: http://127.0.0.1:4880
+  ruview:
+    ports: !override
+      - "127.0.0.1:4960:3000"
+      - "127.0.0.1:4961:3001"

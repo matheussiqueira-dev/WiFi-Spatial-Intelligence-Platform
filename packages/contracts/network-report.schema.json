@@ -1,0 +1,433 @@
+{
+  "$defs": {
+    "NetworkComparison": {
+      "additionalProperties": false,
+      "properties": {
+        "location": {
+          "title": "Location",
+          "type": "string"
+        },
+        "summary": {
+          "$ref": "#/$defs/NetworkSummary"
+        }
+      },
+      "required": [
+        "location",
+        "summary"
+      ],
+      "title": "NetworkComparison",
+      "type": "object"
+    },
+    "NetworkSample": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "data_class": {
+          "const": "HOST_NETWORK_TELEMETRY",
+          "default": "HOST_NETWORK_TELEMETRY",
+          "title": "Data Class",
+          "type": "string"
+        },
+        "evidence_level": {
+          "const": "L2_LIVE_UNVALIDATED",
+          "default": "L2_LIVE_UNVALIDATED",
+          "title": "Evidence Level",
+          "type": "string"
+        },
+        "source": {
+          "const": "windows-netsh",
+          "default": "windows-netsh",
+          "title": "Source",
+          "type": "string"
+        },
+        "sample_id": {
+          "format": "uuid",
+          "title": "Sample Id",
+          "type": "string"
+        },
+        "collector_id": {
+          "format": "uuid",
+          "title": "Collector Id",
+          "type": "string"
+        },
+        "timestamp": {
+          "format": "date-time",
+          "title": "Timestamp",
+          "type": "string"
+        },
+        "location": {
+          "default": "Computador",
+          "maxLength": 48,
+          "minLength": 1,
+          "pattern": "^[^\\W_][\\w .-]*$",
+          "title": "Location",
+          "type": "string"
+        },
+        "link_state": {
+          "enum": [
+            "CONNECTED",
+            "DISCONNECTED",
+            "UNAVAILABLE"
+          ],
+          "title": "Link State",
+          "type": "string"
+        },
+        "signal_percent": {
+          "anyOf": [
+            {
+              "maximum": 100,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Signal Percent"
+        },
+        "channel": {
+          "anyOf": [
+            {
+              "maximum": 233,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Channel"
+        },
+        "radio_type": {
+          "anyOf": [
+            {
+              "enum": [
+                "802.11a",
+                "802.11b",
+                "802.11g",
+                "802.11n",
+                "802.11ac",
+                "802.11ax",
+                "802.11be"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Radio Type"
+        },
+        "rx_mbps": {
+          "anyOf": [
+            {
+              "maximum": 100000,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rx Mbps"
+        },
+        "tx_mbps": {
+          "anyOf": [
+            {
+              "maximum": 100000,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tx Mbps"
+        },
+        "probe_sent": {
+          "default": 0,
+          "maximum": 3,
+          "minimum": 0,
+          "title": "Probe Sent",
+          "type": "integer"
+        },
+        "probe_rtt_ms": {
+          "items": {
+            "maximum": 10000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "maxItems": 3,
+          "title": "Probe Rtt Ms",
+          "type": "array"
+        },
+        "probe_status": {
+          "default": "NOT_RUN",
+          "enum": [
+            "NOT_RUN",
+            "COMPLETED",
+            "UNAVAILABLE"
+          ],
+          "title": "Probe Status",
+          "type": "string"
+        },
+        "collector_error": {
+          "anyOf": [
+            {
+              "enum": [
+                "no_adapter",
+                "read_failed",
+                "unsupported_output",
+                "multiple_adapters",
+                "permission_required"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Collector Error"
+        }
+      },
+      "required": [
+        "sample_id",
+        "collector_id",
+        "timestamp",
+        "link_state"
+      ],
+      "title": "NetworkSample",
+      "type": "object"
+    },
+    "NetworkSummary": {
+      "additionalProperties": false,
+      "properties": {
+        "samples": {
+          "title": "Samples",
+          "type": "integer"
+        },
+        "connected_samples": {
+          "title": "Connected Samples",
+          "type": "integer"
+        },
+        "disconnected_samples": {
+          "title": "Disconnected Samples",
+          "type": "integer"
+        },
+        "unavailable_samples": {
+          "title": "Unavailable Samples",
+          "type": "integer"
+        },
+        "connected_percent": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Connected Percent"
+        },
+        "signal_mean_percent": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Signal Mean Percent"
+        },
+        "signal_min_percent": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Signal Min Percent"
+        },
+        "gateway_mean_ms": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Gateway Mean Ms"
+        },
+        "gateway_p95_ms": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Gateway P95 Ms"
+        },
+        "gateway_loss_percent": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Gateway Loss Percent"
+        },
+        "disconnect_events": {
+          "title": "Disconnect Events",
+          "type": "integer"
+        },
+        "missing_seconds": {
+          "title": "Missing Seconds",
+          "type": "number"
+        },
+        "last_seen": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Last Seen"
+        },
+        "collector_stale": {
+          "title": "Collector Stale",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "samples",
+        "connected_samples",
+        "disconnected_samples",
+        "unavailable_samples",
+        "connected_percent",
+        "signal_mean_percent",
+        "signal_min_percent",
+        "gateway_mean_ms",
+        "gateway_p95_ms",
+        "gateway_loss_percent",
+        "disconnect_events",
+        "missing_seconds",
+        "last_seen",
+        "collector_stale"
+      ],
+      "title": "NetworkSummary",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "data_class": {
+      "const": "HOST_NETWORK_TELEMETRY",
+      "default": "HOST_NETWORK_TELEMETRY",
+      "title": "Data Class",
+      "type": "string"
+    },
+    "evidence_level": {
+      "const": "L2_LIVE_UNVALIDATED",
+      "default": "L2_LIVE_UNVALIDATED",
+      "title": "Evidence Level",
+      "type": "string"
+    },
+    "start": {
+      "format": "date-time",
+      "title": "Start",
+      "type": "string"
+    },
+    "end": {
+      "format": "date-time",
+      "title": "End",
+      "type": "string"
+    },
+    "summary": {
+      "$ref": "#/$defs/NetworkSummary"
+    },
+    "latest": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/NetworkSample"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "items": {
+      "items": {
+        "$ref": "#/$defs/NetworkSample"
+      },
+      "title": "Items",
+      "type": "array"
+    },
+    "total": {
+      "title": "Total",
+      "type": "integer"
+    },
+    "limit": {
+      "title": "Limit",
+      "type": "integer"
+    },
+    "offset": {
+      "title": "Offset",
+      "type": "integer"
+    },
+    "locations": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Locations",
+      "type": "array"
+    },
+    "comparisons": {
+      "items": {
+        "$ref": "#/$defs/NetworkComparison"
+      },
+      "title": "Comparisons",
+      "type": "array"
+    },
+    "configured_location": {
+      "title": "Configured Location",
+      "type": "string"
+    }
+  },
+  "required": [
+    "start",
+    "end",
+    "summary",
+    "latest",
+    "items",
+    "total",
+    "limit",
+    "offset",
+    "locations",
+    "comparisons",
+    "configured_location"
+  ],
+  "title": "NetworkReport",
+  "type": "object"
+}

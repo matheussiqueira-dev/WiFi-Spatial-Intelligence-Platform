@@ -1,0 +1,189 @@
+{
+  "schema_version": "1.0.0",
+  "evidence_level": "L0_SYNTHETIC",
+  "validation_status": "IMPLEMENTED_SYNTHETIC",
+  "mode": "HISTORICAL",
+  "query": {
+    "start": "2026-01-01T00:00:00Z",
+    "end": "2026-01-02T00:00:00Z",
+    "bucket": "minute",
+    "room_id": "living-room",
+    "source_id": null,
+    "scenario": null,
+    "segment_id": null,
+    "gap_seconds": 5.0,
+    "limit": 100,
+    "offset": 0
+  },
+  "summary": {
+    "samples": 10,
+    "segments": 3,
+    "entries_estimate": 2,
+    "exits_estimate": 0,
+    "unknown_count_samples": 1,
+    "presence_seconds": 3.0,
+    "absent_seconds": 3.0,
+    "unknown_seconds": 24.0,
+    "excluded_transitions": 1,
+    "event_rate": 0.3333333333333333,
+    "queue_wait_p50_ms": null,
+    "queue_wait_p95_ms": null,
+    "rf_drop_rate": null
+  },
+  "buckets": {
+    "items": [
+      {
+        "timestamp": "2026-01-01T00:00:00+00:00",
+        "source_id": "native-01",
+        "samples": 8,
+        "presence_samples": 5,
+        "known_count_samples": 8,
+        "unknown_count_samples": 0,
+        "occupancy_max": 2,
+        "entries_estimate": 2,
+        "exits_estimate": 0,
+        "evidence_level": "L0_SYNTHETIC",
+        "occupancy_mean": 0.875,
+        "presence_fraction": 0.625
+      },
+      {
+        "timestamp": "2026-01-01T00:00:00+00:00",
+        "source_id": "ruview-01",
+        "samples": 1,
+        "presence_samples": 1,
+        "known_count_samples": 0,
+        "unknown_count_samples": 1,
+        "occupancy_max": null,
+        "entries_estimate": 0,
+        "exits_estimate": 0,
+        "evidence_level": "L0_SYNTHETIC",
+        "occupancy_mean": null,
+        "presence_fraction": 1.0
+      },
+      {
+        "timestamp": "2026-01-01T00:00:00+00:00",
+        "source_id": "simulator-01",
+        "samples": 1,
+        "presence_samples": 1,
+        "known_count_samples": 1,
+        "unknown_count_samples": 0,
+        "occupancy_max": 2,
+        "entries_estimate": 0,
+        "exits_estimate": 0,
+        "evidence_level": "L0_SYNTHETIC",
+        "occupancy_mean": 2.0,
+        "presence_fraction": 1.0
+      }
+    ],
+    "total": 3,
+    "limit": 100,
+    "offset": 0
+  },
+  "intervals": {
+    "items": [
+      {
+        "start": "2026-01-01T00:00:00+00:00",
+        "end": "2026-01-01T00:00:01+00:00",
+        "source_id": "native-01",
+        "segment_id": "00000000-0000-4000-8000-00000000a001",
+        "state": "absent",
+        "duration_seconds": 1.0,
+        "evidence_level": "L0_SYNTHETIC"
+      },
+      {
+        "start": "2026-01-01T00:00:01+00:00",
+        "end": "2026-01-01T00:00:02+00:00",
+        "source_id": "native-01",
+        "segment_id": "00000000-0000-4000-8000-00000000a001",
+        "state": "absent",
+        "duration_seconds": 1.0,
+        "evidence_level": "L0_SYNTHETIC"
+      },
+      {
+        "start": "2026-01-01T00:00:02+00:00",
+        "end": "2026-01-01T00:00:03+00:00",
+        "source_id": "native-01",
+        "segment_id": "00000000-0000-4000-8000-00000000a001",
+        "state": "absent",
+        "duration_seconds": 1.0,
+        "evidence_level": "L0_SYNTHETIC"
+      },
+      {
+        "start": "2026-01-01T00:00:03+00:00",
+        "end": "2026-01-01T00:00:04+00:00",
+        "source_id": "native-01",
+        "segment_id": "00000000-0000-4000-8000-00000000a001",
+        "state": "present",
+        "duration_seconds": 1.0,
+        "evidence_level": "L0_SYNTHETIC"
+      },
+      {
+        "start": "2026-01-01T00:00:04+00:00",
+        "end": "2026-01-01T00:00:05+00:00",
+        "source_id": "native-01",
+        "segment_id": "00000000-0000-4000-8000-00000000a001",
+        "state": "present",
+        "duration_seconds": 1.0,
+        "evidence_level": "L0_SYNTHETIC"
+      },
+      {
+        "start": "2026-01-01T00:00:05+00:00",
+        "end": "2026-01-01T00:00:06+00:00",
+        "source_id": "native-01",
+        "segment_id": "00000000-0000-4000-8000-00000000a001",
+        "state": "present",
+        "duration_seconds": 1.0,
+        "evidence_level": "L0_SYNTHETIC"
+      },
+      {
+        "start": "2026-01-01T00:00:06+00:00",
+        "end": "2026-01-01T00:00:30+00:00",
+        "source_id": "native-01",
+        "segment_id": "00000000-0000-4000-8000-00000000a001",
+        "state": "unknown",
+        "duration_seconds": 24.0,
+        "evidence_level": "L0_SYNTHETIC"
+      }
+    ],
+    "total": 7,
+    "limit": 100,
+    "offset": 0
+  },
+  "transitions": {
+    "items": [
+      {
+        "timestamp": "2026-01-01T00:00:03+00:00",
+        "event_id": "00000000-0000-4000-8000-000000000103",
+        "source_id": "native-01",
+        "segment_id": "00000000-0000-4000-8000-00000000a001",
+        "from_count": 0,
+        "to_count": 1,
+        "entries_estimate": 1,
+        "exits_estimate": 0,
+        "evidence_level": "L0_SYNTHETIC"
+      },
+      {
+        "timestamp": "2026-01-01T00:00:06+00:00",
+        "event_id": "00000000-0000-4000-8000-000000000106",
+        "source_id": "native-01",
+        "segment_id": "00000000-0000-4000-8000-00000000a001",
+        "from_count": 1,
+        "to_count": 2,
+        "entries_estimate": 1,
+        "exits_estimate": 0,
+        "evidence_level": "L0_SYNTHETIC"
+      }
+    ],
+    "total": 2,
+    "limit": 100,
+    "offset": 0
+  },
+  "limitations": [
+    "Sample-weighted counts; not time-weighted occupancy or validated inference.",
+    "Count deltas are net estimates, not individual door crossings or identities.",
+    "Gaps, unknown counts, segment boundaries and nonincreasing ticks break transitions.",
+    "Legacy records lack session attribution; no transitions inferred for them.",
+    "No extrapolation before first/after last sample; missing buckets are unknown.",
+    "Queue wait measures time before persistence, not sensing or total processing latency."
+  ]
+}

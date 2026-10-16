@@ -1,0 +1,771 @@
+{
+  "model": {
+    "version": "geometry-speed-v1",
+    "threshold_m_per_s": 0.17309108519317756,
+    "features": [
+      "mean_virtual_speed_m_per_s"
+    ],
+    "abstention_margin": 0.1,
+    "sha256": "530151dfefcd3064e5409ff88c14e3f65c4552c1ac382cd6d9fdc450330cd127",
+    "id": "geometry-motion-v1"
+  },
+  "dataset_sha256": "86483fadf69e64f68d1722f3cd022fa973384b088f9f454cb47c842d63dcdad7",
+  "dataset_version": "virtual-motion-v1",
+  "evidence_level": "L0_SYNTHETIC",
+  "validation": {
+    "classes": [
+      "stationary",
+      "walking",
+      "unknown"
+    ],
+    "confusion_matrix": [
+      [
+        12,
+        0,
+        4
+      ],
+      [
+        0,
+        12,
+        4
+      ],
+      [
+        0,
+        0,
+        0
+      ]
+    ],
+    "samples": 32,
+    "support": {
+      "stationary": 16,
+      "walking": 16,
+      "unknown": 0
+    },
+    "rejected": 8,
+    "rejection_rate": 0.25,
+    "accuracy_accepted": 1.0,
+    "false_positive_rate": 0.0,
+    "predictions": [
+      {
+        "session_id": "virtual-4210",
+        "window": 0,
+        "prediction": "stationary",
+        "reference": "stationary",
+        "quality": "complete",
+        "mean_speed": 0.0,
+        "start_seconds": 702.8,
+        "end_seconds": 707.6999999999999
+      },
+      {
+        "session_id": "virtual-4210",
+        "window": 1,
+        "prediction": "stationary",
+        "reference": "stationary",
+        "quality": "complete",
+        "mean_speed": 0.0,
+        "start_seconds": 711.1999999999999,
+        "end_seconds": 716.0999999999999
+      },
+      {
+        "session_id": "virtual-4210",
+        "window": 2,
+        "prediction": "stationary",
+        "reference": "stationary",
+        "quality": "complete",
+        "mean_speed": 0.0,
+        "start_seconds": 719.5999999999999,
+        "end_seconds": 724.5
+      },
+      {
+        "session_id": "virtual-4210",
+        "window": 3,
+        "prediction": "unknown",
+        "reference": "stationary",
+        "quality": "gap",
+        "mean_speed": null,
+        "start_seconds": 728.0,
+        "end_seconds": 742.9
+      },
+      {
+        "session_id": "virtual-4211",
+        "window": 0,
+        "prediction": "walking",
+        "reference": "walking",
+        "quality": "complete",
+        "mean_speed": 0.28122856571272614,
+        "start_seconds": 766.0799999999999,
+        "end_seconds": 771.12
+      },
+      {
+        "session_id": "virtual-4211",
+        "window": 1,
+        "prediction": "walking",
+        "reference": "walking",
+        "quality": "complete",
+        "mean_speed": 0.2650273538918561,
+        "start_seconds": 774.72,
+        "end_seconds": 779.76
+      },
+      {
+        "session_id": "virtual-4211",
+        "window": 2,
+        "prediction": "walking",
+        "reference": "walking",
+        "quality": "complete",
+        "mean_speed": 0.28122856571273247,
+        "start_seconds": 783.36,
+        "end_seconds": 788.4
+      },
+      {
+        "session_id": "virtual-4211",
+        "window": 3,
+        "prediction": "unknown",
+        "reference": "walking",
+        "quality": "gap",
+        "mean_speed": null,
+        "start_seconds": 792.0,
+        "end_seconds": 807.04
+      },
+      {
+        "session_id": "virtual-4212",
+        "window": 0,
+        "prediction": "stationary",
+        "reference": "stationary",
+        "quality": "complete",
+        "mean_speed": 0.0,
+        "start_seconds": 831.76,
+        "end_seconds": 836.9399999999999
+      },
+      {
+        "session_id": "virtual-4212",
+        "window": 1,
+        "prediction": "stationary",
+        "reference": "stationary",
+        "quality": "complete",
+        "mean_speed": 0.0,
+        "start_seconds": 840.64,
+        "end_seconds": 845.8199999999999
+      },
+      {
+        "session_id": "virtual-4212",
+        "window": 2,
+        "prediction": "stationary",
+        "reference": "stationary",
+        "quality": "complete",
+        "mean_speed": 0.0,
+        "start_seconds": 849.52,
+        "end_seconds": 854.7
+      },
+      {
+        "session_id": "virtual-4212",
+        "window": 3,
+        "prediction": "unknown",
+        "reference": "stationary",
+        "quality": "gap",
+        "mean_speed": null,
+        "start_seconds": 858.4,
+        "end_seconds": 873.58
+      },
+      {
+        "session_id": "virtual-4213",
+        "window": 0,
+        "prediction": "walking",
+        "reference": "walking",
+        "quality": "complete",
+        "mean_speed": 0.26642706225416873,
+        "start_seconds": 899.84,
+        "end_seconds": 905.16
+      },
+      {
+        "session_id": "virtual-4213",
+        "window": 1,
+        "prediction": "walking",
+        "reference": "walking",
+        "quality": "complete",
+        "mean_speed": 0.26642706225416873,
+        "start_seconds": 908.96,
+        "end_seconds": 914.28
+      },
+      {
+        "session_id": "virtual-4213",
+        "window": 2,
+        "prediction": "walking",
+        "reference": "walking",
+        "quality": "complete",
+        "mean_speed": 0.26642706225416884,
+        "start_seconds": 918.08,
+        "end_seconds": 923.4
+      },
+      {
+        "session_id": "virtual-4213",
+        "window": 3,
+        "prediction": "unknown",
+        "reference": "walking",
+        "quality": "gap",
+        "mean_speed": null,
+        "start_seconds": 927.2,
+        "end_seconds": 942.52
+      },
+      {
+        "session_id": "virtual-4214",
+        "window": 0,
+        "prediction": "stationary",
+        "reference": "stationary",
+        "quality": "complete",
+        "mean_speed": 0.0,
+        "start_seconds": 970.3199999999999,
+        "end_seconds": 975.7799999999999
+      },
+      {
+        "session_id": "virtual-4214",
+        "window": 1,
+        "prediction": "stationary",
+        "reference": "stationary",
+        "quality": "complete",
+        "mean_speed": 0.0,
+        "start_seconds": 979.68,
+        "end_seconds": 985.1399999999999
+      },
+      {
+        "session_id": "virtual-4214",
+        "window": 2,
+        "prediction": "stationary",
+        "reference": "stationary",
+        "quality": "complete",
+        "mean_speed": 0.0,
+        "start_seconds": 989.0399999999998,
+        "end_seconds": 994.4999999999999
+      },
+      {
+        "session_id": "virtual-4214",
+        "window": 3,
+        "prediction": "unknown",
+        "reference": "stationary",
+        "quality": "gap",
+        "mean_speed": null,
+        "start_seconds": 998.3999999999999,
+        "end_seconds": 1013.8599999999999
+      },
+      {
+        "session_id": "virtual-4215",
+        "window": 0,
+        "prediction": "walking",
+        "reference": "walking",
+        "quality": "complete",
+        "mean_speed": 0.2892636675902383,
+        "start_seconds": 912.8,
+        "end_seconds": 917.6999999999999
+      },
+      {
+        "session_id": "virtual-4215",
+        "window": 1,
+        "prediction": "walking",
+        "reference": "walking",
+        "quality": "complete",
+        "mean_speed": 0.27259956400304886,
+        "start_seconds": 921.1999999999999,
+        "end_seconds": 926.0999999999999
+      },
+      {
+        "session_id": "virtual-4215",
+        "window": 2,
+        "prediction": "walking",
+        "reference": "walking",
+        "quality": "complete",
+        "mean_speed": 0.2892636675902383,
+        "start_seconds": 929.5999999999999,
+        "end_seconds": 934.4999999999999
+      },
+      {
+        "session_id": "virtual-4215",
+        "window": 3,
+        "prediction": "unknown",
+        "reference": "walking",
+        "quality": "gap",
+        "mean_speed": null,
+        "start_seconds": 937.9999999999999,
+        "end_seconds": 952.9
+      },
+      {
+        "session_id": "virtual-4216",
+        "window": 0,
+        "prediction": "stationary",
+        "reference": "stationary",
+        "quality": "complete",
+        "mean_speed": 0.0,
+        "start_seconds": 982.0799999999999,
+        "end_seconds": 987.12
+      },
+      {
+        "session_id": "virtual-4216",
+        "window": 1,
+        "prediction": "stationary",
+        "reference": "stationary",
+        "quality": "complete",
+        "mean_speed": 0.0,
+        "start_seconds": 990.7199999999999,
+        "end_seconds": 995.76
+      },
+      {
+        "session_id": "virtual-4216",
+        "window": 2,
+        "prediction": "stationary",
+        "reference": "stationary",
+        "quality": "complete",
+        "mean_speed": 0.0,
+        "start_seconds": 999.36,
+        "end_seconds": 1004.4
+      },
+      {
+        "session_id": "virtual-4216",
+        "window": 3,
+        "prediction": "unknown",
+        "reference": "stationary",
+        "quality": "gap",
+        "mean_speed": null,
+        "start_seconds": 1008.0,
+        "end_seconds": 1023.04
+      },
+      {
+        "session_id": "virtual-4217",
+        "window": 0,
+        "prediction": "walking",
+        "reference": "walking",
+        "quality": "complete",
+        "mean_speed": 0.273627793666437,
+        "start_seconds": 1053.76,
+        "end_seconds": 1058.94
+      },
+      {
+        "session_id": "virtual-4217",
+        "window": 1,
+        "prediction": "walking",
+        "reference": "walking",
+        "quality": "complete",
+        "mean_speed": 0.27362779366644896,
+        "start_seconds": 1062.64,
+        "end_seconds": 1067.82
+      },
+      {
+        "session_id": "virtual-4217",
+        "window": 2,
+        "prediction": "walking",
+        "reference": "walking",
+        "quality": "complete",
+        "mean_speed": 0.2674133721116297,
+        "start_seconds": 1071.52,
+        "end_seconds": 1076.7
+      },
+      {
+        "session_id": "virtual-4217",
+        "window": 3,
+        "prediction": "unknown",
+        "reference": "walking",
+        "quality": "gap",
+        "mean_speed": null,
+        "start_seconds": 1080.4,
+        "end_seconds": 1095.58
+      }
+    ]
+  },
+  "evaluation": {
+    "classes": [
+      "stationary",
+      "walking",
+      "unknown"
+    ],
+    "confusion_matrix": [
+      [
+        12,
+        0,
+        4
+      ],
+      [
+        0,
+        12,
+        4
+      ],
+      [
+        0,
+        0,
+        0
+      ]
+    ],
+    "samples": 32,
+    "support": {
+      "stationary": 16,
+      "walking": 16,
+      "unknown": 0
+    },
+    "rejected": 8,
+    "rejection_rate": 0.25,
+    "accuracy_accepted": 1.0,
+    "false_positive_rate": 0.0,
+    "predictions": [
+      {
+        "session_id": "virtual-4220",
+        "window": 0,
+        "prediction": "stationary",
+        "reference": "stationary",
+        "quality": "complete",
+        "mean_speed": 0.0,
+        "start_seconds": 1803.6000000000001,
+        "end_seconds": 1809.9
+      },
+      {
+        "session_id": "virtual-4220",
+        "window": 1,
+        "prediction": "stationary",
+        "reference": "stationary",
+        "quality": "complete",
+        "mean_speed": 0.0,
+        "start_seconds": 1814.4,
+        "end_seconds": 1820.7
+      },
+      {
+        "session_id": "virtual-4220",
+        "window": 2,
+        "prediction": "stationary",
+        "reference": "stationary",
+        "quality": "complete",
+        "mean_speed": 0.0,
+        "start_seconds": 1825.2,
+        "end_seconds": 1831.5
+      },
+      {
+        "session_id": "virtual-4220",
+        "window": 3,
+        "prediction": "unknown",
+        "reference": "stationary",
+        "quality": "gap",
+        "mean_speed": null,
+        "start_seconds": 1836.0,
+        "end_seconds": 1852.3
+      },
+      {
+        "session_id": "virtual-4221",
+        "window": 0,
+        "prediction": "walking",
+        "reference": "walking",
+        "quality": "complete",
+        "mean_speed": 0.20635480533989195,
+        "start_seconds": 1898.88,
+        "end_seconds": 1905.3200000000002
+      },
+      {
+        "session_id": "virtual-4221",
+        "window": 1,
+        "prediction": "walking",
+        "reference": "walking",
+        "quality": "complete",
+        "mean_speed": 0.22009192099256972,
+        "start_seconds": 1909.92,
+        "end_seconds": 1916.3600000000001
+      },
+      {
+        "session_id": "virtual-4221",
+        "window": 2,
+        "prediction": "walking",
+        "reference": "walking",
+        "quality": "complete",
+        "mean_speed": 0.2200919209925698,
+        "start_seconds": 1920.96,
+        "end_seconds": 1927.4
+      },
+      {
+        "session_id": "virtual-4221",
+        "window": 3,
+        "prediction": "unknown",
+        "reference": "walking",
+        "quality": "gap",
+        "mean_speed": null,
+        "start_seconds": 1932.0,
+        "end_seconds": 1948.44
+      },
+      {
+        "session_id": "virtual-4222",
+        "window": 0,
+        "prediction": "stationary",
+        "reference": "stationary",
+        "quality": "complete",
+        "mean_speed": 0.0,
+        "start_seconds": 1996.5600000000002,
+        "end_seconds": 2003.14
+      },
+      {
+        "session_id": "virtual-4222",
+        "window": 1,
+        "prediction": "stationary",
+        "reference": "stationary",
+        "quality": "complete",
+        "mean_speed": 0.0,
+        "start_seconds": 2007.8400000000001,
+        "end_seconds": 2014.42
+      },
+      {
+        "session_id": "virtual-4222",
+        "window": 2,
+        "prediction": "stationary",
+        "reference": "stationary",
+        "quality": "complete",
+        "mean_speed": 0.0,
+        "start_seconds": 2019.1200000000001,
+        "end_seconds": 2025.7
+      },
+      {
+        "session_id": "virtual-4222",
+        "window": 3,
+        "prediction": "unknown",
+        "reference": "stationary",
+        "quality": "gap",
+        "mean_speed": null,
+        "start_seconds": 2030.4,
+        "end_seconds": 2046.98
+      },
+      {
+        "session_id": "virtual-4223",
+        "window": 0,
+        "prediction": "walking",
+        "reference": "walking",
+        "quality": "complete",
+        "mean_speed": 0.21092142428453975,
+        "start_seconds": 2096.64,
+        "end_seconds": 2103.36
+      },
+      {
+        "session_id": "virtual-4223",
+        "window": 1,
+        "prediction": "walking",
+        "reference": "walking",
+        "quality": "complete",
+        "mean_speed": 0.21092142428453972,
+        "start_seconds": 2108.16,
+        "end_seconds": 2114.88
+      },
+      {
+        "session_id": "virtual-4223",
+        "window": 2,
+        "prediction": "walking",
+        "reference": "walking",
+        "quality": "complete",
+        "mean_speed": 0.20193959939203313,
+        "start_seconds": 2119.68,
+        "end_seconds": 2126.4
+      },
+      {
+        "session_id": "virtual-4223",
+        "window": 3,
+        "prediction": "unknown",
+        "reference": "walking",
+        "quality": "gap",
+        "mean_speed": null,
+        "start_seconds": 2131.2,
+        "end_seconds": 2147.92
+      },
+      {
+        "session_id": "virtual-4224",
+        "window": 0,
+        "prediction": "stationary",
+        "reference": "stationary",
+        "quality": "complete",
+        "mean_speed": 0.0,
+        "start_seconds": 2199.12,
+        "end_seconds": 2205.98
+      },
+      {
+        "session_id": "virtual-4224",
+        "window": 1,
+        "prediction": "stationary",
+        "reference": "stationary",
+        "quality": "complete",
+        "mean_speed": 0.0,
+        "start_seconds": 2210.88,
+        "end_seconds": 2217.74
+      },
+      {
+        "session_id": "virtual-4224",
+        "window": 2,
+        "prediction": "stationary",
+        "reference": "stationary",
+        "quality": "complete",
+        "mean_speed": 0.0,
+        "start_seconds": 2222.64,
+        "end_seconds": 2229.5
+      },
+      {
+        "session_id": "virtual-4224",
+        "window": 3,
+        "prediction": "unknown",
+        "reference": "stationary",
+        "quality": "gap",
+        "mean_speed": null,
+        "start_seconds": 2234.4,
+        "end_seconds": 2251.2599999999998
+      },
+      {
+        "session_id": "virtual-4225",
+        "window": 0,
+        "prediction": "walking",
+        "reference": "walking",
+        "quality": "complete",
+        "mean_speed": 0.21987321706955915,
+        "start_seconds": 2073.6,
+        "end_seconds": 2079.9
+      },
+      {
+        "session_id": "virtual-4225",
+        "window": 1,
+        "prediction": "walking",
+        "reference": "walking",
+        "quality": "complete",
+        "mean_speed": 0.2249828525701779,
+        "start_seconds": 2084.4,
+        "end_seconds": 2090.7000000000003
+      },
+      {
+        "session_id": "virtual-4225",
+        "window": 2,
+        "prediction": "walking",
+        "reference": "walking",
+        "quality": "complete",
+        "mean_speed": 0.22498285257019407,
+        "start_seconds": 2095.2000000000003,
+        "end_seconds": 2101.5
+      },
+      {
+        "session_id": "virtual-4225",
+        "window": 3,
+        "prediction": "unknown",
+        "reference": "walking",
+        "quality": "gap",
+        "mean_speed": null,
+        "start_seconds": 2106.0,
+        "end_seconds": 2122.3
+      },
+      {
+        "session_id": "virtual-4226",
+        "window": 0,
+        "prediction": "stationary",
+        "reference": "stationary",
+        "quality": "complete",
+        "mean_speed": 0.0,
+        "start_seconds": 2174.88,
+        "end_seconds": 2181.32
+      },
+      {
+        "session_id": "virtual-4226",
+        "window": 1,
+        "prediction": "stationary",
+        "reference": "stationary",
+        "quality": "complete",
+        "mean_speed": 0.0,
+        "start_seconds": 2185.92,
+        "end_seconds": 2192.36
+      },
+      {
+        "session_id": "virtual-4226",
+        "window": 2,
+        "prediction": "stationary",
+        "reference": "stationary",
+        "quality": "complete",
+        "mean_speed": 0.0,
+        "start_seconds": 2196.96,
+        "end_seconds": 2203.4
+      },
+      {
+        "session_id": "virtual-4226",
+        "window": 3,
+        "prediction": "unknown",
+        "reference": "stationary",
+        "quality": "gap",
+        "mean_speed": null,
+        "start_seconds": 2208.0,
+        "end_seconds": 2224.44
+      },
+      {
+        "session_id": "virtual-4227",
+        "window": 0,
+        "prediction": "walking",
+        "reference": "walking",
+        "quality": "complete",
+        "mean_speed": 0.21540911416292993,
+        "start_seconds": 2278.56,
+        "end_seconds": 2285.1400000000003
+      },
+      {
+        "session_id": "virtual-4227",
+        "window": 1,
+        "prediction": "walking",
+        "reference": "walking",
+        "quality": "complete",
+        "mean_speed": 0.21087145423941236,
+        "start_seconds": 2289.84,
+        "end_seconds": 2296.42
+      },
+      {
+        "session_id": "virtual-4227",
+        "window": 2,
+        "prediction": "walking",
+        "reference": "walking",
+        "quality": "complete",
+        "mean_speed": 0.21540911416294478,
+        "start_seconds": 2301.1200000000003,
+        "end_seconds": 2307.7000000000003
+      },
+      {
+        "session_id": "virtual-4227",
+        "window": 3,
+        "prediction": "unknown",
+        "reference": "walking",
+        "quality": "gap",
+        "mean_speed": null,
+        "start_seconds": 2312.4,
+        "end_seconds": 2328.98
+      }
+    ]
+  },
+  "splits": {
+    "train": [
+      "virtual-4200",
+      "virtual-4201",
+      "virtual-4202",
+      "virtual-4203",
+      "virtual-4204",
+      "virtual-4205",
+      "virtual-4206",
+      "virtual-4207"
+    ],
+    "validation": [
+      "virtual-4210",
+      "virtual-4211",
+      "virtual-4212",
+      "virtual-4213",
+      "virtual-4214",
+      "virtual-4215",
+      "virtual-4216",
+      "virtual-4217"
+    ],
+    "test": [
+      "virtual-4220",
+      "virtual-4221",
+      "virtual-4222",
+      "virtual-4223",
+      "virtual-4224",
+      "virtual-4225",
+      "virtual-4226",
+      "virtual-4227"
+    ]
+  },
+  "unsupported": [
+    "sitting",
+    "possible_fall",
+    "rf_fingerprint",
+    "vitals",
+    "pose"
+  ],
+  "limitation": "Virtual single-point geometry; no RF, human activity or real accuracy.",
+  "id": "00000000-0000-4000-8000-000000000004",
+  "created_at": "2026-01-01T00:00:00Z",
+  "seed": 42,
+  "duration_ms": 0.0
+}

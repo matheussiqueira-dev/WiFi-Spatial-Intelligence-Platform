@@ -1,0 +1,11 @@
+ARG PYTHON_VERSION=3.12
+FROM python:${PYTHON_VERSION}-slim
+WORKDIR /workspace
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+COPY apps/api/requirements.lock.txt /workspace/requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+COPY apps/api /workspace/apps/api
+COPY scripts /workspace/scripts
+COPY packages/contracts /workspace/packages/contracts
+COPY apps/web/playwright.config.ts /workspace/apps/web/playwright.config.ts
+CMD ["python", "scripts/verify/linux_checks.py"]

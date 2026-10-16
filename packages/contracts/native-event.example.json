@@ -1,0 +1,46 @@
+{
+  "schema_version": "2.0.0",
+  "event_id": "00000000-0000-4000-8000-000000000003",
+  "timestamp": "2026-01-01T00:00:00Z",
+  "source_id": "native-01",
+  "room_id": "living-room",
+  "event_type": "synthetic.spatial.observation",
+  "source_type": "SIMULATED",
+  "evidence_level": "L0_SYNTHETIC",
+  "validation_status": "IMPLEMENTED_SYNTHETIC",
+  "measurements": {
+    "presence_detected": true,
+    "occupancy_estimate": 2,
+    "ground_truth_positions": [
+      [
+        0.0,
+        2.0
+      ],
+      [
+        1.3,
+        2.9
+      ]
+    ]
+  },
+  "quality": {
+    "signal_quality": null,
+    "confidence": null
+  },
+  "model": {
+    "id": null,
+    "version": null
+  },
+  "provenance": {
+    "generator": "synthetic-native",
+    "seed": 42,
+    "tick": 0,
+    "scenario": "walking",
+    "dataset_id": null
+  },
+  "privacy": {
+    "classification": "synthetic",
+    "consent_record_id": null
+  },
+  "processing_latency_ms": null,
+  "provider": "synthetic-native"
+}

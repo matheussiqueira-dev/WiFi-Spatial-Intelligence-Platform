@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.0.0",
+  "event_id": "00000000-0000-4000-8000-000000000001",
+  "timestamp": "2026-01-01T00:00:00Z",
+  "source_id": "simulator-01",
+  "room_id": "living-room",
+  "event_type": "simulation.observation",
+  "source_type": "SIMULATED",
+  "evidence_level": "L0_SYNTHETIC",
+  "validation_status": "IMPLEMENTED_SYNTHETIC",
+  "measurements": {
+    "presence_detected": true,
+    "occupancy_estimate": 2,
+    "ground_truth_positions": [
+      [
+        4.0,
+        4.8
+      ],
+      [
+        6.104,
+        3.973
+      ]
+    ]
+  },
+  "quality": {
+    "signal_quality": null,
+    "confidence": null
+  },
+  "model": {
+    "id": null,
+    "version": null
+  },
+  "provenance": {
+    "generator": "local-simulator",
+    "seed": 42,
+    "tick": 0,
+    "scenario": "walking",
+    "dataset_id": null
+  },
+  "privacy": {
+    "classification": "synthetic",
+    "consent_record_id": null
+  },
+  "processing_latency_ms": null
+}

@@ -1,0 +1,453 @@
+{
+  "evidence_level": "L0_SYNTHETIC",
+  "mode": "REPLAY",
+  "snapshot_end": "2026-01-02T00:00:00+00:00",
+  "items": [
+    {
+      "event": {
+        "schema_version": "1.0.0",
+        "event_id": "00000000-0000-4000-8000-000000000001",
+        "timestamp": "2026-01-01T00:00:00Z",
+        "source_id": "simulator-01",
+        "room_id": "living-room",
+        "event_type": "simulation.observation",
+        "source_type": "SIMULATED",
+        "evidence_level": "L0_SYNTHETIC",
+        "validation_status": "IMPLEMENTED_SYNTHETIC",
+        "measurements": {
+          "presence_detected": true,
+          "occupancy_estimate": 2,
+          "ground_truth_positions": [
+            [
+              4.0,
+              4.8
+            ],
+            [
+              6.104,
+              3.973
+            ]
+          ]
+        },
+        "quality": {
+          "signal_quality": null,
+          "confidence": null
+        },
+        "model": {
+          "id": null,
+          "version": null
+        },
+        "provenance": {
+          "generator": "local-simulator",
+          "seed": 42,
+          "tick": 0,
+          "scenario": "walking",
+          "dataset_id": null
+        },
+        "privacy": {
+          "classification": "synthetic",
+          "consent_record_id": null
+        },
+        "processing_latency_ms": null
+      },
+      "segment_id": null
+    },
+    {
+      "event": {
+        "schema_version": "2.0.0",
+        "event_id": "00000000-0000-4000-8000-000000000100",
+        "timestamp": "2026-01-01T00:00:00Z",
+        "source_id": "native-01",
+        "room_id": "living-room",
+        "event_type": "synthetic.spatial.observation",
+        "source_type": "SIMULATED",
+        "evidence_level": "L0_SYNTHETIC",
+        "validation_status": "IMPLEMENTED_SYNTHETIC",
+        "measurements": {
+          "presence_detected": false,
+          "occupancy_estimate": 0,
+          "ground_truth_positions": []
+        },
+        "quality": {
+          "signal_quality": null,
+          "confidence": null
+        },
+        "model": {
+          "id": null,
+          "version": null
+        },
+        "provenance": {
+          "generator": "synthetic-native",
+          "seed": 42,
+          "tick": 0,
+          "scenario": "entering",
+          "dataset_id": null
+        },
+        "privacy": {
+          "classification": "synthetic",
+          "consent_record_id": null
+        },
+        "processing_latency_ms": null,
+        "provider": "synthetic-native"
+      },
+      "segment_id": "00000000-0000-4000-8000-00000000a001"
+    },
+    {
+      "event": {
+        "schema_version": "2.0.0",
+        "event_id": "00000000-0000-4000-8000-000000000101",
+        "timestamp": "2026-01-01T00:00:01Z",
+        "source_id": "native-01",
+        "room_id": "living-room",
+        "event_type": "synthetic.spatial.observation",
+        "source_type": "SIMULATED",
+        "evidence_level": "L0_SYNTHETIC",
+        "validation_status": "IMPLEMENTED_SYNTHETIC",
+        "measurements": {
+          "presence_detected": false,
+          "occupancy_estimate": 0,
+          "ground_truth_positions": []
+        },
+        "quality": {
+          "signal_quality": null,
+          "confidence": null
+        },
+        "model": {
+          "id": null,
+          "version": null
+        },
+        "provenance": {
+          "generator": "synthetic-native",
+          "seed": 42,
+          "tick": 1,
+          "scenario": "entering",
+          "dataset_id": null
+        },
+        "privacy": {
+          "classification": "synthetic",
+          "consent_record_id": null
+        },
+        "processing_latency_ms": null,
+        "provider": "synthetic-native"
+      },
+      "segment_id": "00000000-0000-4000-8000-00000000a001"
+    },
+    {
+      "event": {
+        "schema_version": "2.0.0",
+        "event_id": "00000000-0000-4000-8000-000000000102",
+        "timestamp": "2026-01-01T00:00:02Z",
+        "source_id": "native-01",
+        "room_id": "living-room",
+        "event_type": "synthetic.spatial.observation",
+        "source_type": "SIMULATED",
+        "evidence_level": "L0_SYNTHETIC",
+        "validation_status": "IMPLEMENTED_SYNTHETIC",
+        "measurements": {
+          "presence_detected": false,
+          "occupancy_estimate": 0,
+          "ground_truth_positions": []
+        },
+        "quality": {
+          "signal_quality": null,
+          "confidence": null
+        },
+        "model": {
+          "id": null,
+          "version": null
+        },
+        "provenance": {
+          "generator": "synthetic-native",
+          "seed": 42,
+          "tick": 2,
+          "scenario": "entering",
+          "dataset_id": null
+        },
+        "privacy": {
+          "classification": "synthetic",
+          "consent_record_id": null
+        },
+        "processing_latency_ms": null,
+        "provider": "synthetic-native"
+      },
+      "segment_id": "00000000-0000-4000-8000-00000000a001"
+    },
+    {
+      "event": {
+        "schema_version": "2.0.0",
+        "event_id": "00000000-0000-4000-8000-000000000103",
+        "timestamp": "2026-01-01T00:00:03Z",
+        "source_id": "native-01",
+        "room_id": "living-room",
+        "event_type": "synthetic.spatial.observation",
+        "source_type": "SIMULATED",
+        "evidence_level": "L0_SYNTHETIC",
+        "validation_status": "IMPLEMENTED_SYNTHETIC",
+        "measurements": {
+          "presence_detected": true,
+          "occupancy_estimate": 1,
+          "ground_truth_positions": [
+            [
+              0.51,
+              2.33
+            ]
+          ]
+        },
+        "quality": {
+          "signal_quality": null,
+          "confidence": null
+        },
+        "model": {
+          "id": null,
+          "version": null
+        },
+        "provenance": {
+          "generator": "synthetic-native",
+          "seed": 42,
+          "tick": 3,
+          "scenario": "entering",
+          "dataset_id": null
+        },
+        "privacy": {
+          "classification": "synthetic",
+          "consent_record_id": null
+        },
+        "processing_latency_ms": null,
+        "provider": "synthetic-native"
+      },
+      "segment_id": "00000000-0000-4000-8000-00000000a001"
+    },
+    {
+      "event": {
+        "schema_version": "2.0.0",
+        "event_id": "00000000-0000-4000-8000-000000000104",
+        "timestamp": "2026-01-01T00:00:04Z",
+        "source_id": "native-01",
+        "room_id": "living-room",
+        "event_type": "synthetic.spatial.observation",
+        "source_type": "SIMULATED",
+        "evidence_level": "L0_SYNTHETIC",
+        "validation_status": "IMPLEMENTED_SYNTHETIC",
+        "measurements": {
+          "presence_detected": true,
+          "occupancy_estimate": 1,
+          "ground_truth_positions": [
+            [
+              0.68,
+              2.44
+            ]
+          ]
+        },
+        "quality": {
+          "signal_quality": null,
+          "confidence": null
+        },
+        "model": {
+          "id": null,
+          "version": null
+        },
+        "provenance": {
+          "generator": "synthetic-native",
+          "seed": 42,
+          "tick": 4,
+          "scenario": "entering",
+          "dataset_id": null
+        },
+        "privacy": {
+          "classification": "synthetic",
+          "consent_record_id": null
+        },
+        "processing_latency_ms": null,
+        "provider": "synthetic-native"
+      },
+      "segment_id": "00000000-0000-4000-8000-00000000a001"
+    },
+    {
+      "event": {
+        "schema_version": "2.0.0",
+        "event_id": "00000000-0000-4000-8000-000000000105",
+        "timestamp": "2026-01-01T00:00:05Z",
+        "source_id": "native-01",
+        "room_id": "living-room",
+        "event_type": "synthetic.spatial.observation",
+        "source_type": "SIMULATED",
+        "evidence_level": "L0_SYNTHETIC",
+        "validation_status": "IMPLEMENTED_SYNTHETIC",
+        "measurements": {
+          "presence_detected": true,
+          "occupancy_estimate": 1,
+          "ground_truth_positions": [
+            [
+              0.85,
+              2.55
+            ]
+          ]
+        },
+        "quality": {
+          "signal_quality": null,
+          "confidence": null
+        },
+        "model": {
+          "id": null,
+          "version": null
+        },
+        "provenance": {
+          "generator": "synthetic-native",
+          "seed": 42,
+          "tick": 5,
+          "scenario": "entering",
+          "dataset_id": null
+        },
+        "privacy": {
+          "classification": "synthetic",
+          "consent_record_id": null
+        },
+        "processing_latency_ms": null,
+        "provider": "synthetic-native"
+      },
+      "segment_id": "00000000-0000-4000-8000-00000000a001"
+    },
+    {
+      "event": {
+        "schema_version": "2.0.0",
+        "event_id": "00000000-0000-4000-8000-000000000106",
+        "timestamp": "2026-01-01T00:00:06Z",
+        "source_id": "native-01",
+        "room_id": "living-room",
+        "event_type": "synthetic.spatial.observation",
+        "source_type": "SIMULATED",
+        "evidence_level": "L0_SYNTHETIC",
+        "validation_status": "IMPLEMENTED_SYNTHETIC",
+        "measurements": {
+          "presence_detected": true,
+          "occupancy_estimate": 2,
+          "ground_truth_positions": [
+            [
+              1.02,
+              2.66
+            ],
+            [
+              2.32,
+              3.56
+            ]
+          ]
+        },
+        "quality": {
+          "signal_quality": null,
+          "confidence": null
+        },
+        "model": {
+          "id": null,
+          "version": null
+        },
+        "provenance": {
+          "generator": "synthetic-native",
+          "seed": 42,
+          "tick": 6,
+          "scenario": "entering",
+          "dataset_id": null
+        },
+        "privacy": {
+          "classification": "synthetic",
+          "consent_record_id": null
+        },
+        "processing_latency_ms": null,
+        "provider": "synthetic-native"
+      },
+      "segment_id": "00000000-0000-4000-8000-00000000a001"
+    },
+    {
+      "event": {
+        "schema_version": "1.1.0",
+        "event_id": "00000000-0000-4000-8000-000000000201",
+        "timestamp": "2026-01-01T00:00:10Z",
+        "source_id": "ruview-01",
+        "room_id": "living-room",
+        "event_type": "simulation.ruview.observation",
+        "source_type": "SIMULATED",
+        "evidence_level": "L0_SYNTHETIC",
+        "validation_status": "IMPLEMENTED_SYNTHETIC",
+        "measurements": {
+          "presence_detected": true,
+          "occupancy_estimate": null,
+          "ground_truth_positions": []
+        },
+        "quality": {
+          "signal_quality": null,
+          "confidence": null
+        },
+        "model": {
+          "id": null,
+          "version": null
+        },
+        "provenance": {
+          "generator": "ruview-simulated",
+          "scenario": "ruview-simulated",
+          "seed": null,
+          "tick": 113,
+          "dataset_id": null,
+          "upstream_source": "simulated",
+          "upstream_type": "sensing_update",
+          "adapter_version": "1.0.0"
+        },
+        "privacy": {
+          "classification": "synthetic",
+          "consent_record_id": null
+        },
+        "processing_latency_ms": null
+      },
+      "segment_id": "00000000-0000-4000-8000-00000000a001"
+    },
+    {
+      "event": {
+        "schema_version": "2.0.0",
+        "event_id": "00000000-0000-4000-8000-000000000107",
+        "timestamp": "2026-01-01T00:00:30Z",
+        "source_id": "native-01",
+        "room_id": "living-room",
+        "event_type": "synthetic.spatial.observation",
+        "source_type": "SIMULATED",
+        "evidence_level": "L0_SYNTHETIC",
+        "validation_status": "IMPLEMENTED_SYNTHETIC",
+        "measurements": {
+          "presence_detected": true,
+          "occupancy_estimate": 2,
+          "ground_truth_positions": [
+            [
+              1.19,
+              2.77
+            ],
+            [
+              2.49,
+              3.67
+            ]
+          ]
+        },
+        "quality": {
+          "signal_quality": null,
+          "confidence": null
+        },
+        "model": {
+          "id": null,
+          "version": null
+        },
+        "provenance": {
+          "generator": "synthetic-native",
+          "seed": 42,
+          "tick": 7,
+          "scenario": "entering",
+          "dataset_id": null
+        },
+        "privacy": {
+          "classification": "synthetic",
+          "consent_record_id": null
+        },
+        "processing_latency_ms": null,
+        "provider": "synthetic-native"
+      },
+      "segment_id": "00000000-0000-4000-8000-00000000a001"
+    }
+  ],
+  "total": 10,
+  "limit": 100,
+  "offset": 0
+}
