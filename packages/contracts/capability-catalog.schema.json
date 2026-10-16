@@ -1,0 +1,155 @@
+{
+  "$defs": {
+    "CapabilityState": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "group": {
+          "enum": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "title": "Group",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "UNVERIFIED",
+            "PARTIAL",
+            "IMPLEMENTED_SYNTHETIC",
+            "IMPLEMENTED_LIVE",
+            "INTEGRATED_LEGACY",
+            "VALIDATED_REAL_DATA",
+            "PLANNED",
+            "BLOCKED"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "evidence_ceiling": {
+          "anyOf": [
+            {
+              "enum": [
+                "L0_SYNTHETIC",
+                "L1_RECORDED_UNVALIDATED",
+                "L2_LIVE_UNVALIDATED",
+                "L3_REFERENCE_VALIDATED"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Evidence Ceiling"
+        },
+        "regulatory": {
+          "items": {
+            "enum": [
+              "NONE",
+              "LGPD_PERSONAL",
+              "LGPD_SENSITIVE",
+              "ANATEL_RADIO",
+              "ANVISA_SAMD"
+            ],
+            "type": "string"
+          },
+          "title": "Regulatory",
+          "type": "array"
+        },
+        "requires_hardware": {
+          "title": "Requires Hardware",
+          "type": "boolean"
+        },
+        "requires_consent": {
+          "title": "Requires Consent",
+          "type": "boolean"
+        },
+        "profiles": {
+          "items": {
+            "enum": [
+              "lab",
+              "commercial-br"
+            ],
+            "type": "string"
+          },
+          "title": "Profiles",
+          "type": "array"
+        },
+        "endpoint": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Endpoint"
+        },
+        "note": {
+          "title": "Note",
+          "type": "string"
+        },
+        "enabled": {
+          "title": "Enabled",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "group",
+        "status",
+        "evidence_ceiling",
+        "regulatory",
+        "requires_hardware",
+        "requires_consent",
+        "profiles",
+        "endpoint",
+        "note",
+        "enabled"
+      ],
+      "title": "CapabilityState",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "profile": {
+      "enum": [
+        "lab",
+        "commercial-br"
+      ],
+      "title": "Profile",
+      "type": "string"
+    },
+    "disclaimer": {
+      "title": "Disclaimer",
+      "type": "string"
+    },
+    "capabilities": {
+      "items": {
+        "$ref": "#/$defs/CapabilityState"
+      },
+      "title": "Capabilities",
+      "type": "array"
+    }
+  },
+  "required": [
+    "profile",
+    "disclaimer",
+    "capabilities"
+  ],
+  "title": "CapabilityCatalog",
+  "type": "object"
+}

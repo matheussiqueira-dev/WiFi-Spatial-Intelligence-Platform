@@ -1,0 +1,247 @@
+{
+  "$defs": {
+    "BandPlan": {
+      "additionalProperties": false,
+      "properties": {
+        "band": {
+          "enum": [
+            "2.4GHz",
+            "5GHz",
+            "6GHz"
+          ],
+          "title": "Band",
+          "type": "string"
+        },
+        "observed": {
+          "items": {
+            "$ref": "#/$defs/ChannelOccupancy"
+          },
+          "title": "Observed",
+          "type": "array"
+        },
+        "candidates": {
+          "items": {
+            "$ref": "#/$defs/ChannelScore"
+          },
+          "title": "Candidates",
+          "type": "array"
+        },
+        "current_channel": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Current Channel"
+        },
+        "current_score": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Current Score"
+        },
+        "recommended_channel": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Recommended Channel"
+        },
+        "advice": {
+          "enum": [
+            "KEEP",
+            "CONSIDER_CHANGE",
+            "NO_CURRENT",
+            "NOT_MODELED"
+          ],
+          "title": "Advice",
+          "type": "string"
+        }
+      },
+      "required": [
+        "band",
+        "observed",
+        "candidates",
+        "current_channel",
+        "current_score",
+        "recommended_channel",
+        "advice"
+      ],
+      "title": "BandPlan",
+      "type": "object"
+    },
+    "ChannelOccupancy": {
+      "additionalProperties": false,
+      "description": "Aggregate of neighbouring access points on one channel; never an identifier.",
+      "properties": {
+        "band": {
+          "enum": [
+            "2.4GHz",
+            "5GHz",
+            "6GHz"
+          ],
+          "title": "Band",
+          "type": "string"
+        },
+        "channel": {
+          "maximum": 233,
+          "minimum": 1,
+          "title": "Channel",
+          "type": "integer"
+        },
+        "ap_count": {
+          "maximum": 500,
+          "minimum": 1,
+          "title": "Ap Count",
+          "type": "integer"
+        },
+        "strongest_signal_percent": {
+          "maximum": 100,
+          "minimum": 0,
+          "title": "Strongest Signal Percent",
+          "type": "integer"
+        },
+        "utilization_percent": {
+          "anyOf": [
+            {
+              "maximum": 100,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Utilization Percent"
+        }
+      },
+      "required": [
+        "band",
+        "channel",
+        "ap_count",
+        "strongest_signal_percent"
+      ],
+      "title": "ChannelOccupancy",
+      "type": "object"
+    },
+    "ChannelScore": {
+      "additionalProperties": false,
+      "properties": {
+        "channel": {
+          "title": "Channel",
+          "type": "integer"
+        },
+        "observed_ap_count": {
+          "title": "Observed Ap Count",
+          "type": "number"
+        },
+        "interference_score": {
+          "title": "Interference Score",
+          "type": "number"
+        }
+      },
+      "required": [
+        "channel",
+        "observed_ap_count",
+        "interference_score"
+      ],
+      "title": "ChannelScore",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "data_class": {
+      "const": "HOST_NETWORK_TELEMETRY",
+      "default": "HOST_NETWORK_TELEMETRY",
+      "title": "Data Class",
+      "type": "string"
+    },
+    "evidence_level": {
+      "const": "L2_LIVE_UNVALIDATED",
+      "default": "L2_LIVE_UNVALIDATED",
+      "title": "Evidence Level",
+      "type": "string"
+    },
+    "start": {
+      "format": "date-time",
+      "title": "Start",
+      "type": "string"
+    },
+    "end": {
+      "format": "date-time",
+      "title": "End",
+      "type": "string"
+    },
+    "location": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Location"
+    },
+    "surveys": {
+      "title": "Surveys",
+      "type": "integer"
+    },
+    "failed_surveys": {
+      "title": "Failed Surveys",
+      "type": "integer"
+    },
+    "last_survey_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Last Survey At"
+    },
+    "bands": {
+      "items": {
+        "$ref": "#/$defs/BandPlan"
+      },
+      "title": "Bands",
+      "type": "array"
+    },
+    "limitations": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Limitations",
+      "type": "array"
+    }
+  },
+  "required": [
+    "start",
+    "end",
+    "location",
+    "surveys",
+    "failed_surveys",
+    "last_survey_at",
+    "bands",
+    "limitations"
+  ],
+  "title": "ChannelPlan",
+  "type": "object"
+}

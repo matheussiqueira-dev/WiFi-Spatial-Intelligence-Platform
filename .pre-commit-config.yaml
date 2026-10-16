@@ -1,0 +1,26 @@
+# Optional local hooks (pip install pre-commit; pre-commit install). Not a runtime or
+# lock dependency; CI (.github/workflows/ci.yml) and scripts/verify/check.ps1 stay the gates.
+# Hook repositories are pinned by commit; ruff matches apps/api/requirements.lock.txt.
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: 44b5042edab9382aba712eed4f9c7bab7a3d6a3e # v0.17.0
+    hooks:
+      - id: ruff
+        files: ^(apps/api|scripts/verify|scripts/network)/
+      - id: ruff-format
+        args: [--check]
+        files: ^(apps/api|scripts/verify|scripts/network)/
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c # v6.0.0
+    hooks:
+      - id: check-added-large-files
+        args: [--maxkb=1024]
+      - id: check-merge-conflict
+      - id: detect-private-key
+  - repo: local
+    hooks:
+      - id: prettier-check
+        name: prettier --check (project install)
+        language: system
+        entry: node node_modules/prettier/bin/prettier.cjs --check
+        files: ^(apps/web|scripts/verify)/.*\.(ts|tsx|mjs|js|css|json|md)$

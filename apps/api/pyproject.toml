@@ -1,0 +1,25 @@
+[project]
+name = "wifi-spatial-api"
+version = "0.1.0"
+requires-python = ">=3.12,<3.14"
+dependencies = ["fastapi", "uvicorn", "websockets", "sqlalchemy", "alembic", "pydantic-settings"]
+
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[project.optional-dependencies]
+dev = ["pytest", "httpx2", "ruff", "pip-audit"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]

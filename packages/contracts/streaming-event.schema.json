@@ -1,0 +1,694 @@
+{
+  "$defs": {
+    "Measurements": {
+      "additionalProperties": false,
+      "else": {
+        "properties": {
+          "occupancy_estimate": {
+            "maximum": 0
+          }
+        }
+      },
+      "if": {
+        "properties": {
+          "presence_detected": {
+            "const": true
+          }
+        },
+        "required": [
+          "presence_detected"
+        ]
+      },
+      "properties": {
+        "presence_detected": {
+          "title": "Presence Detected",
+          "type": "boolean"
+        },
+        "occupancy_estimate": {
+          "maximum": 20,
+          "minimum": 0,
+          "title": "Occupancy Estimate",
+          "type": "integer"
+        },
+        "ground_truth_positions": {
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "maximum": 8,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "maximum": 6,
+                "minimum": 0,
+                "type": "number"
+              }
+            ],
+            "type": "array"
+          },
+          "maxItems": 20,
+          "title": "Ground Truth Positions",
+          "type": "array"
+        }
+      },
+      "required": [
+        "presence_detected",
+        "occupancy_estimate",
+        "ground_truth_positions"
+      ],
+      "then": {
+        "properties": {
+          "occupancy_estimate": {
+            "minimum": 1
+          }
+        }
+      },
+      "title": "Measurements",
+      "type": "object"
+    },
+    "ModelReference": {
+      "additionalProperties": false,
+      "description": "L0 ground truth is never attributed to a model inference.",
+      "properties": {
+        "id": {
+          "default": null,
+          "title": "Id",
+          "type": "null"
+        },
+        "version": {
+          "default": null,
+          "title": "Version",
+          "type": "null"
+        }
+      },
+      "required": [
+        "id",
+        "version"
+      ],
+      "title": "ModelReference",
+      "type": "object"
+    },
+    "NativeEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "2.0.0",
+          "default": "2.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "event_id": {
+          "format": "uuid",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "timestamp": {
+          "format": "date-time",
+          "title": "Timestamp",
+          "type": "string"
+        },
+        "source_id": {
+          "const": "native-01",
+          "default": "native-01",
+          "title": "Source Id",
+          "type": "string"
+        },
+        "room_id": {
+          "const": "living-room",
+          "default": "living-room",
+          "title": "Room Id",
+          "type": "string"
+        },
+        "event_type": {
+          "const": "synthetic.spatial.observation",
+          "default": "synthetic.spatial.observation",
+          "title": "Event Type",
+          "type": "string"
+        },
+        "source_type": {
+          "const": "SIMULATED",
+          "default": "SIMULATED",
+          "title": "Source Type",
+          "type": "string"
+        },
+        "evidence_level": {
+          "const": "L0_SYNTHETIC",
+          "default": "L0_SYNTHETIC",
+          "title": "Evidence Level",
+          "type": "string"
+        },
+        "validation_status": {
+          "const": "IMPLEMENTED_SYNTHETIC",
+          "default": "IMPLEMENTED_SYNTHETIC",
+          "title": "Validation Status",
+          "type": "string"
+        },
+        "measurements": {
+          "$ref": "#/$defs/Measurements"
+        },
+        "quality": {
+          "$ref": "#/$defs/Quality"
+        },
+        "model": {
+          "$ref": "#/$defs/ModelReference"
+        },
+        "provenance": {
+          "$ref": "#/$defs/NativeProvenance"
+        },
+        "privacy": {
+          "$ref": "#/$defs/Privacy"
+        },
+        "processing_latency_ms": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Processing Latency Ms"
+        },
+        "provider": {
+          "const": "synthetic-native",
+          "default": "synthetic-native",
+          "title": "Provider",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schema_version",
+        "event_id",
+        "timestamp",
+        "source_id",
+        "room_id",
+        "event_type",
+        "source_type",
+        "evidence_level",
+        "validation_status",
+        "measurements",
+        "quality",
+        "model",
+        "provenance",
+        "privacy",
+        "processing_latency_ms",
+        "provider"
+      ],
+      "title": "NativeEvent",
+      "type": "object"
+    },
+    "NativeProvenance": {
+      "additionalProperties": false,
+      "properties": {
+        "generator": {
+          "const": "synthetic-native",
+          "default": "synthetic-native",
+          "title": "Generator",
+          "type": "string"
+        },
+        "seed": {
+          "maximum": 4294967295,
+          "minimum": 0,
+          "title": "Seed",
+          "type": "integer"
+        },
+        "tick": {
+          "minimum": 0,
+          "title": "Tick",
+          "type": "integer"
+        },
+        "scenario": {
+          "enum": [
+            "empty",
+            "stationary",
+            "walking",
+            "entering",
+            "leaving",
+            "interference",
+            "packet_loss",
+            "disconnect"
+          ],
+          "title": "Scenario",
+          "type": "string"
+        },
+        "dataset_id": {
+          "default": null,
+          "title": "Dataset Id",
+          "type": "null"
+        }
+      },
+      "required": [
+        "generator",
+        "seed",
+        "tick",
+        "scenario",
+        "dataset_id"
+      ],
+      "title": "NativeProvenance",
+      "type": "object"
+    },
+    "Privacy": {
+      "additionalProperties": false,
+      "properties": {
+        "classification": {
+          "const": "synthetic",
+          "default": "synthetic",
+          "title": "Classification",
+          "type": "string"
+        },
+        "consent_record_id": {
+          "default": null,
+          "title": "Consent Record Id",
+          "type": "null"
+        }
+      },
+      "required": [
+        "classification",
+        "consent_record_id"
+      ],
+      "title": "Privacy",
+      "type": "object"
+    },
+    "Provenance": {
+      "additionalProperties": false,
+      "properties": {
+        "generator": {
+          "const": "local-simulator",
+          "default": "local-simulator",
+          "title": "Generator",
+          "type": "string"
+        },
+        "seed": {
+          "title": "Seed",
+          "type": "integer"
+        },
+        "tick": {
+          "minimum": 0,
+          "title": "Tick",
+          "type": "integer"
+        },
+        "scenario": {
+          "title": "Scenario",
+          "type": "string"
+        },
+        "dataset_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Dataset Id"
+        }
+      },
+      "required": [
+        "generator",
+        "seed",
+        "tick",
+        "scenario",
+        "dataset_id"
+      ],
+      "title": "Provenance",
+      "type": "object"
+    },
+    "Quality": {
+      "additionalProperties": false,
+      "description": "L0 ground truth has no measured signal quality or confidence.",
+      "properties": {
+        "signal_quality": {
+          "default": null,
+          "title": "Signal Quality",
+          "type": "null"
+        },
+        "confidence": {
+          "default": null,
+          "title": "Confidence",
+          "type": "null"
+        }
+      },
+      "required": [
+        "signal_quality",
+        "confidence"
+      ],
+      "title": "Quality",
+      "type": "object"
+    },
+    "RuViewEvent": {
+      "additionalProperties": false,
+      "description": "Additive contract; never relabel upstream estimates as ground truth.",
+      "properties": {
+        "schema_version": {
+          "const": "1.1.0",
+          "default": "1.1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "event_id": {
+          "format": "uuid",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "timestamp": {
+          "format": "date-time",
+          "title": "Timestamp",
+          "type": "string"
+        },
+        "source_id": {
+          "const": "ruview-01",
+          "default": "ruview-01",
+          "title": "Source Id",
+          "type": "string"
+        },
+        "room_id": {
+          "const": "living-room",
+          "default": "living-room",
+          "title": "Room Id",
+          "type": "string"
+        },
+        "event_type": {
+          "const": "simulation.ruview.observation",
+          "default": "simulation.ruview.observation",
+          "title": "Event Type",
+          "type": "string"
+        },
+        "source_type": {
+          "const": "SIMULATED",
+          "default": "SIMULATED",
+          "title": "Source Type",
+          "type": "string"
+        },
+        "evidence_level": {
+          "const": "L0_SYNTHETIC",
+          "default": "L0_SYNTHETIC",
+          "title": "Evidence Level",
+          "type": "string"
+        },
+        "validation_status": {
+          "const": "IMPLEMENTED_SYNTHETIC",
+          "default": "IMPLEMENTED_SYNTHETIC",
+          "title": "Validation Status",
+          "type": "string"
+        },
+        "measurements": {
+          "$ref": "#/$defs/RuViewMeasurements"
+        },
+        "quality": {
+          "$ref": "#/$defs/Quality"
+        },
+        "model": {
+          "$ref": "#/$defs/ModelReference"
+        },
+        "provenance": {
+          "$ref": "#/$defs/RuViewProvenance"
+        },
+        "privacy": {
+          "$ref": "#/$defs/Privacy"
+        },
+        "processing_latency_ms": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Processing Latency Ms"
+        }
+      },
+      "required": [
+        "schema_version",
+        "event_id",
+        "timestamp",
+        "source_id",
+        "room_id",
+        "event_type",
+        "source_type",
+        "evidence_level",
+        "validation_status",
+        "measurements",
+        "quality",
+        "model",
+        "provenance",
+        "privacy",
+        "processing_latency_ms"
+      ],
+      "title": "RuViewEvent",
+      "type": "object"
+    },
+    "RuViewMeasurements": {
+      "additionalProperties": false,
+      "else": {
+        "properties": {
+          "occupancy_estimate": {
+            "maximum": 0
+          }
+        }
+      },
+      "if": {
+        "properties": {
+          "presence_detected": {
+            "const": true
+          }
+        },
+        "required": [
+          "presence_detected"
+        ]
+      },
+      "properties": {
+        "presence_detected": {
+          "title": "Presence Detected",
+          "type": "boolean"
+        },
+        "occupancy_estimate": {
+          "anyOf": [
+            {
+              "maximum": 20,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Occupancy Estimate"
+        },
+        "ground_truth_positions": {
+          "items": {},
+          "maxItems": 0,
+          "title": "Ground Truth Positions",
+          "type": "array"
+        }
+      },
+      "required": [
+        "presence_detected",
+        "occupancy_estimate",
+        "ground_truth_positions"
+      ],
+      "then": {
+        "properties": {
+          "occupancy_estimate": {
+            "minimum": 1
+          }
+        }
+      },
+      "title": "RuViewMeasurements",
+      "type": "object"
+    },
+    "RuViewProvenance": {
+      "additionalProperties": false,
+      "properties": {
+        "generator": {
+          "const": "ruview-simulated",
+          "default": "ruview-simulated",
+          "title": "Generator",
+          "type": "string"
+        },
+        "scenario": {
+          "const": "ruview-simulated",
+          "default": "ruview-simulated",
+          "title": "Scenario",
+          "type": "string"
+        },
+        "seed": {
+          "default": null,
+          "title": "Seed",
+          "type": "null"
+        },
+        "tick": {
+          "minimum": 0,
+          "title": "Tick",
+          "type": "integer"
+        },
+        "dataset_id": {
+          "default": null,
+          "title": "Dataset Id",
+          "type": "null"
+        },
+        "upstream_source": {
+          "const": "simulated",
+          "default": "simulated",
+          "title": "Upstream Source",
+          "type": "string"
+        },
+        "upstream_type": {
+          "const": "sensing_update",
+          "default": "sensing_update",
+          "title": "Upstream Type",
+          "type": "string"
+        },
+        "adapter_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Adapter Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "generator",
+        "scenario",
+        "seed",
+        "tick",
+        "dataset_id",
+        "upstream_source",
+        "upstream_type",
+        "adapter_version"
+      ],
+      "title": "RuViewProvenance",
+      "type": "object"
+    },
+    "SensingEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "event_id": {
+          "format": "uuid",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "timestamp": {
+          "format": "date-time",
+          "title": "Timestamp",
+          "type": "string"
+        },
+        "source_id": {
+          "const": "simulator-01",
+          "default": "simulator-01",
+          "title": "Source Id",
+          "type": "string"
+        },
+        "room_id": {
+          "const": "living-room",
+          "default": "living-room",
+          "title": "Room Id",
+          "type": "string"
+        },
+        "event_type": {
+          "const": "simulation.observation",
+          "default": "simulation.observation",
+          "title": "Event Type",
+          "type": "string"
+        },
+        "source_type": {
+          "const": "SIMULATED",
+          "default": "SIMULATED",
+          "title": "Source Type",
+          "type": "string"
+        },
+        "evidence_level": {
+          "const": "L0_SYNTHETIC",
+          "default": "L0_SYNTHETIC",
+          "title": "Evidence Level",
+          "type": "string"
+        },
+        "validation_status": {
+          "const": "IMPLEMENTED_SYNTHETIC",
+          "default": "IMPLEMENTED_SYNTHETIC",
+          "title": "Validation Status",
+          "type": "string"
+        },
+        "measurements": {
+          "$ref": "#/$defs/Measurements"
+        },
+        "quality": {
+          "$ref": "#/$defs/Quality"
+        },
+        "model": {
+          "$ref": "#/$defs/ModelReference"
+        },
+        "provenance": {
+          "$ref": "#/$defs/Provenance"
+        },
+        "privacy": {
+          "$ref": "#/$defs/Privacy"
+        },
+        "processing_latency_ms": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Processing Latency Ms"
+        }
+      },
+      "required": [
+        "schema_version",
+        "event_id",
+        "timestamp",
+        "source_id",
+        "room_id",
+        "event_type",
+        "source_type",
+        "evidence_level",
+        "validation_status",
+        "measurements",
+        "quality",
+        "model",
+        "provenance",
+        "privacy",
+        "processing_latency_ms"
+      ],
+      "title": "SensingEvent",
+      "type": "object"
+    }
+  },
+  "discriminator": {
+    "mapping": {
+      "1.0.0": "#/$defs/SensingEvent",
+      "1.1.0": "#/$defs/RuViewEvent",
+      "2.0.0": "#/$defs/NativeEvent"
+    },
+    "propertyName": "schema_version"
+  },
+  "oneOf": [
+    {
+      "$ref": "#/$defs/SensingEvent"
+    },
+    {
+      "$ref": "#/$defs/RuViewEvent"
+    },
+    {
+      "$ref": "#/$defs/NativeEvent"
+    }
+  ]
+}

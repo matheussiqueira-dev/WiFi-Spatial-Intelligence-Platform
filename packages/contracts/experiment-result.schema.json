@@ -1,0 +1,315 @@
+{
+  "$defs": {
+    "Evaluation": {
+      "additionalProperties": false,
+      "properties": {
+        "classes": {
+          "items": {
+            "enum": [
+              "stationary",
+              "walking",
+              "unknown"
+            ],
+            "type": "string"
+          },
+          "title": "Classes",
+          "type": "array"
+        },
+        "confusion_matrix": {
+          "items": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "title": "Confusion Matrix",
+          "type": "array"
+        },
+        "samples": {
+          "maximum": 100,
+          "minimum": 0,
+          "title": "Samples",
+          "type": "integer"
+        },
+        "support": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "title": "Support",
+          "type": "object"
+        },
+        "rejected": {
+          "minimum": 0,
+          "title": "Rejected",
+          "type": "integer"
+        },
+        "rejection_rate": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rejection Rate"
+        },
+        "accuracy_accepted": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Accuracy Accepted"
+        },
+        "false_positive_rate": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "False Positive Rate"
+        },
+        "predictions": {
+          "items": {
+            "$ref": "#/$defs/WindowPrediction"
+          },
+          "maxItems": 100,
+          "title": "Predictions",
+          "type": "array"
+        }
+      },
+      "required": [
+        "classes",
+        "confusion_matrix",
+        "samples",
+        "support",
+        "rejected",
+        "rejection_rate",
+        "accuracy_accepted",
+        "false_positive_rate",
+        "predictions"
+      ],
+      "title": "Evaluation",
+      "type": "object"
+    },
+    "ModelMetadata": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "const": "geometry-motion-v1",
+          "title": "Id",
+          "type": "string"
+        },
+        "version": {
+          "const": "geometry-speed-v1",
+          "title": "Version",
+          "type": "string"
+        },
+        "threshold_m_per_s": {
+          "exclusiveMinimum": 0,
+          "title": "Threshold M Per S",
+          "type": "number"
+        },
+        "abstention_margin": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Abstention Margin",
+          "type": "number"
+        },
+        "features": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Features",
+          "type": "array"
+        },
+        "sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "version",
+        "threshold_m_per_s",
+        "abstention_margin",
+        "features",
+        "sha256"
+      ],
+      "title": "ModelMetadata",
+      "type": "object"
+    },
+    "WindowPrediction": {
+      "additionalProperties": false,
+      "properties": {
+        "session_id": {
+          "title": "Session Id",
+          "type": "string"
+        },
+        "window": {
+          "minimum": 0,
+          "title": "Window",
+          "type": "integer"
+        },
+        "prediction": {
+          "enum": [
+            "stationary",
+            "walking",
+            "unknown"
+          ],
+          "title": "Prediction",
+          "type": "string"
+        },
+        "reference": {
+          "enum": [
+            "stationary",
+            "walking",
+            "unknown"
+          ],
+          "title": "Reference",
+          "type": "string"
+        },
+        "quality": {
+          "enum": [
+            "gap",
+            "complete"
+          ],
+          "title": "Quality",
+          "type": "string"
+        },
+        "mean_speed": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Mean Speed"
+        },
+        "start_seconds": {
+          "minimum": 0,
+          "title": "Start Seconds",
+          "type": "number"
+        },
+        "end_seconds": {
+          "minimum": 0,
+          "title": "End Seconds",
+          "type": "number"
+        }
+      },
+      "required": [
+        "session_id",
+        "window",
+        "prediction",
+        "reference",
+        "quality",
+        "mean_speed",
+        "start_seconds",
+        "end_seconds"
+      ],
+      "title": "WindowPrediction",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "format": "uuid",
+      "title": "Id",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "seed": {
+      "title": "Seed",
+      "type": "integer"
+    },
+    "duration_ms": {
+      "minimum": 0,
+      "title": "Duration Ms",
+      "type": "number"
+    },
+    "model": {
+      "$ref": "#/$defs/ModelMetadata"
+    },
+    "dataset_sha256": {
+      "pattern": "^[a-f0-9]{64}$",
+      "title": "Dataset Sha256",
+      "type": "string"
+    },
+    "dataset_version": {
+      "const": "virtual-motion-v1",
+      "title": "Dataset Version",
+      "type": "string"
+    },
+    "evidence_level": {
+      "const": "L0_SYNTHETIC",
+      "title": "Evidence Level",
+      "type": "string"
+    },
+    "validation": {
+      "$ref": "#/$defs/Evaluation"
+    },
+    "evaluation": {
+      "$ref": "#/$defs/Evaluation"
+    },
+    "splits": {
+      "additionalProperties": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "title": "Splits",
+      "type": "object"
+    },
+    "unsupported": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Unsupported",
+      "type": "array"
+    },
+    "limitation": {
+      "title": "Limitation",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "created_at",
+    "seed",
+    "duration_ms",
+    "model",
+    "dataset_sha256",
+    "dataset_version",
+    "evidence_level",
+    "validation",
+    "evaluation",
+    "splits",
+    "unsupported",
+    "limitation"
+  ],
+  "title": "ExperimentResult",
+  "type": "object"
+}

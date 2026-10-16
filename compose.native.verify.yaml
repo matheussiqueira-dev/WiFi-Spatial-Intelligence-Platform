@@ -1,0 +1,13 @@
+services:
+  api:
+    ports: !override
+      - "127.0.0.1:4900:8000"
+    environment:
+      SPATIAL_ORIGINS: '["http://127.0.0.1:4400"]'
+      SPATIAL_LEGACY_LAB_ENABLED: "false"
+  web:
+    ports: !override
+      - "127.0.0.1:4400:3000"
+    build:
+      args:
+        NEXT_PUBLIC_API_URL: http://127.0.0.1:4900

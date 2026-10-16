@@ -1,0 +1,12 @@
+{
+  "type": "sensing_update",
+  "source": "simulated",
+  "timestamp": 1791968894.724,
+  "tick": 113,
+  "classification": {
+    "motion_level": "present_still",
+    "presence": true,
+    "confidence": 0.44646321439591663
+  },
+  "estimated_persons": 1
+}

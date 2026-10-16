@@ -1,0 +1,1 @@
+Copie docs/PROJECT_MASTER_PLAN.md para a pasta docs do repositório LOCAL no IntelliJ. Cole o conteúdo de CODEX_EXECUTION_PROMPT.txt no Codex. Os resultados locais ainda devem ser auditados pelo Codex; nenhum arquivo foi enviado ao GitHub.

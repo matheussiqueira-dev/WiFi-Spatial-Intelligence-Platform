@@ -1,0 +1,228 @@
+{
+  "profile": "lab",
+  "disclaimer": "Enquadramento regulat\u00f3rio preliminar para planejamento; n\u00e3o \u00e9 parecer jur\u00eddico nem certifica\u00e7\u00e3o. Revisar com especialista antes de comercializar.",
+  "capabilities": [
+    {
+      "id": "network.link_diagnostics",
+      "name": "Diagn\u00f3stico do enlace Wi-Fi do computador",
+      "group": "A",
+      "status": "IMPLEMENTED_LIVE",
+      "evidence_ceiling": "L2_LIVE_UNVALIDATED",
+      "regulatory": [
+        "NONE"
+      ],
+      "requires_hardware": false,
+      "requires_consent": false,
+      "profiles": [
+        "lab",
+        "commercial-br"
+      ],
+      "endpoint": "/api/v1/network/report",
+      "note": "Sinal, canal, taxas e sondas ICMP ao gateway privado; sem SSID/BSSID.",
+      "enabled": true
+    },
+    {
+      "id": "network.location_comparison",
+      "name": "Compara\u00e7\u00e3o de pontos do ambiente",
+      "group": "A",
+      "status": "IMPLEMENTED_LIVE",
+      "evidence_ceiling": "L2_LIVE_UNVALIDATED",
+      "regulatory": [
+        "NONE"
+      ],
+      "requires_hardware": false,
+      "requires_consent": false,
+      "profiles": [
+        "lab",
+        "commercial-br"
+      ],
+      "endpoint": "/api/v1/network/report",
+      "note": "Ponto nomeado manualmente pelo operador; n\u00e3o h\u00e1 localiza\u00e7\u00e3o por RF.",
+      "enabled": true
+    },
+    {
+      "id": "network.channel_plan",
+      "name": "Ocupa\u00e7\u00e3o de canais e recomenda\u00e7\u00e3o de canal",
+      "group": "A",
+      "status": "IMPLEMENTED_LIVE",
+      "evidence_ceiling": "L2_LIVE_UNVALIDATED",
+      "regulatory": [
+        "NONE"
+      ],
+      "requires_hardware": false,
+      "requires_consent": false,
+      "profiles": [
+        "lab",
+        "commercial-br"
+      ],
+      "endpoint": "/api/v1/network/channel-plan",
+      "note": "Varredura passiva j\u00e1 feita pelo Windows; s\u00f3 agregados por canal saem do host.",
+      "enabled": true
+    },
+    {
+      "id": "spatial.presence",
+      "name": "Presen\u00e7a e movimento",
+      "group": "B",
+      "status": "IMPLEMENTED_SYNTHETIC",
+      "evidence_ceiling": "L0_SYNTHETIC",
+      "regulatory": [
+        "LGPD_PERSONAL",
+        "ANATEL_RADIO"
+      ],
+      "requires_hardware": true,
+      "requires_consent": true,
+      "profiles": [
+        "lab"
+      ],
+      "endpoint": "/api/v1/events",
+      "note": "Sensores virtuais; dado real exige CSI e consentimento dos ocupantes.",
+      "enabled": true
+    },
+    {
+      "id": "spatial.occupancy_analytics",
+      "name": "Ocupa\u00e7\u00e3o por zona, perman\u00eancia e transi\u00e7\u00f5es",
+      "group": "B",
+      "status": "IMPLEMENTED_SYNTHETIC",
+      "evidence_ceiling": "L0_SYNTHETIC",
+      "regulatory": [
+        "LGPD_PERSONAL"
+      ],
+      "requires_hardware": true,
+      "requires_consent": true,
+      "profiles": [
+        "lab"
+      ],
+      "endpoint": "/api/v1/analytics",
+      "note": "Analytics sobre eventos persistidos; hoje somente sint\u00e9ticos.",
+      "enabled": true
+    },
+    {
+      "id": "spatial.activity_baseline",
+      "name": "Classificador baseline de atividade",
+      "group": "B",
+      "status": "IMPLEMENTED_SYNTHETIC",
+      "evidence_ceiling": "L0_SYNTHETIC",
+      "regulatory": [
+        "LGPD_PERSONAL"
+      ],
+      "requires_hardware": true,
+      "requires_consent": true,
+      "profiles": [
+        "lab"
+      ],
+      "endpoint": "/api/v1/model-lab/jobs",
+      "note": "Treino e avalia\u00e7\u00e3o em dataset sint\u00e9tico; n\u00e3o \u00e9 acur\u00e1cia real.",
+      "enabled": true
+    },
+    {
+      "id": "spatial.rf_fingerprint",
+      "name": "Impress\u00e3o RF e anomalia do ambiente",
+      "group": "B",
+      "status": "PLANNED",
+      "evidence_ceiling": null,
+      "regulatory": [
+        "ANATEL_RADIO"
+      ],
+      "requires_hardware": true,
+      "requires_consent": false,
+      "profiles": [
+        "lab"
+      ],
+      "endpoint": null,
+      "note": "Depende de CSI; n\u00e3o identifica qual objeto ou pessoa mudou.",
+      "enabled": false
+    },
+    {
+      "id": "health.respiration",
+      "name": "Frequ\u00eancia respirat\u00f3ria",
+      "group": "C",
+      "status": "PLANNED",
+      "evidence_ceiling": null,
+      "regulatory": [
+        "LGPD_SENSITIVE",
+        "ANVISA_SAMD"
+      ],
+      "requires_hardware": true,
+      "requires_consent": true,
+      "profiles": [
+        "lab"
+      ],
+      "endpoint": null,
+      "note": "Pesquisa n\u00e3o diagn\u00f3stica; sem alega\u00e7\u00e3o cl\u00ednica.",
+      "enabled": false
+    },
+    {
+      "id": "health.heart_rate",
+      "name": "Frequ\u00eancia card\u00edaca",
+      "group": "C",
+      "status": "PLANNED",
+      "evidence_ceiling": null,
+      "regulatory": [
+        "LGPD_SENSITIVE",
+        "ANVISA_SAMD"
+      ],
+      "requires_hardware": true,
+      "requires_consent": true,
+      "profiles": [
+        "lab"
+      ],
+      "endpoint": null,
+      "note": "Pesquisa n\u00e3o diagn\u00f3stica; sem alega\u00e7\u00e3o cl\u00ednica.",
+      "enabled": false
+    },
+    {
+      "id": "safety.fall_detection",
+      "name": "Detec\u00e7\u00e3o de queda",
+      "group": "C",
+      "status": "PLANNED",
+      "evidence_ceiling": null,
+      "regulatory": [
+        "LGPD_SENSITIVE",
+        "ANVISA_SAMD"
+      ],
+      "requires_hardware": true,
+      "requires_consent": true,
+      "profiles": [
+        "lab"
+      ],
+      "endpoint": null,
+      "note": "N\u00e3o \u00e9 alerta de seguran\u00e7a certificado.",
+      "enabled": false
+    },
+    {
+      "id": "health.sleep",
+      "name": "Sono e triagem de apneia",
+      "group": "C",
+      "status": "PLANNED",
+      "evidence_ceiling": null,
+      "regulatory": [
+        "LGPD_SENSITIVE",
+        "ANVISA_SAMD"
+      ],
+      "requires_hardware": true,
+      "requires_consent": true,
+      "profiles": [
+        "lab"
+      ],
+      "endpoint": null,
+      "note": "Pesquisa n\u00e3o diagn\u00f3stica.",
+      "enabled": false
+    },
+    {
+      "id": "identity.rf_reidentification",
+      "name": "Reidentifica\u00e7\u00e3o de pessoas por RF",
+      "group": "D",
+      "status": "BLOCKED",
+      "evidence_ceiling": null,
+      "regulatory": [
+        "LGPD_SENSITIVE"
+      ],
+      "requires_hardware": true,
+      "requires_consent": true,
+      "profiles": [],
+      "endpoint": null,
+      "note": "Bloqueada pelo princ\u00edpio 5; reabre apenas por decis\u00e3o expl\u00edcita do propriet\u00e1rio.",
+      "enabled": false
+    }
+  ]
+}

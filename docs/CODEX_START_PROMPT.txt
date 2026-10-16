@@ -1,0 +1,7 @@
+Leia integralmente docs/PROJECT_MASTER_PLAN.md (v3.0). Esta é a fonte de verdade de requisitos e substitui a v2.0. Leia também docs/PROGRESS.md, docs/REQUIREMENTS_TRACEABILITY.md, docs/VERIFICATION_REPORT.md, README.md, CLAUDE.md e AGENTS.md se disponíveis.
+
+Você tem autorização para executar autonomamente tarefas de baixo risco dentro deste repositório: criar/editar código e documentação, rodar testes/builds/linters, usar Docker local sem remover volumes, instalar dependências gratuitas, corrigir falhas e repetir validações, sempre segundo a seção 3 do plano. Use aprovações persistentes apenas quando a interface oferecer essa opção para comandos específicos confiáveis. Não tente contornar controles do Codex/IntelliJ.
+
+Primeiro audite o estado local e a falha recente Python lint (exit 1); verifique o teste Python 3.13 e os warnings. Preserve staged/unstaged. Em seguida faça F0R, F1R, F2R (independência clean-room do RuView, sem copiar implementação) e F3A com testes e evidências. Não interrompa ao criar planos. Não usar serviços pagos, não fazer commits/push/deploy, não apagar dados nem ativar hardware real sem minha autorização explícita.
+
+Atualize docs/PROGRESS.md, docs/REQUIREMENTS_TRACEABILITY.md e docs/VERIFICATION_REPORT.md ao final de cada marco. Mostre arquivos alterados, testes executados, resultados concretos e próxima etapa.

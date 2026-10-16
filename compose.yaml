@@ -1,0 +1,59 @@
+name: wifi-spatial
+services:
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      SPATIAL_TOKEN: ${SPATIAL_TOKEN:?Run bootstrap.ps1 or set a random token of at least 32 characters}
+      SPATIAL_DATABASE_URL: sqlite:////workspace/runtime/spatial.db
+      SPATIAL_RETENTION_EVENTS: ${SPATIAL_RETENTION_EVENTS:-10000}
+      SPATIAL_LEGACY_LAB_ENABLED: ${SPATIAL_LEGACY_LAB_ENABLED:-false}
+      SPATIAL_ORIGINS: '["http://127.0.0.1:3000","http://localhost:3000"]'
+      SPATIAL_RUVIEW_HTTP_URL: http://ruview:3000
+      SPATIAL_RUVIEW_WS_URL: ws://ruview:3001/ws/sensing
+      SPATIAL_RUVIEW_TOKEN: ${SPATIAL_RUVIEW_TOKEN:-}
+      SPATIAL_RUVIEW_STALE_SECONDS: ${SPATIAL_RUVIEW_STALE_SECONDS:-5}
+      # Opt-in backup; inside the container the destination is always the data volume.
+      SPATIAL_BACKUP_ENABLED: ${SPATIAL_BACKUP_ENABLED:-false}
+      SPATIAL_BACKUP_INTERVAL_SECONDS: ${SPATIAL_BACKUP_INTERVAL_SECONDS:-86400}
+      SPATIAL_BACKUP_DESTINATION: /workspace/runtime/backups
+      SPATIAL_RATE_AUTH: ${SPATIAL_RATE_AUTH:-30}
+      SPATIAL_RATE_WRITE: ${SPATIAL_RATE_WRITE:-60}
+      SPATIAL_RATE_READ: ${SPATIAL_RATE_READ:-600}
+      SPATIAL_RATE_STREAM: ${SPATIAL_RATE_STREAM:-120}
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - spatial-data:/workspace/runtime
+    init: true
+    logging:
+      driver: json-file
+      options: { max-size: "2m", max-file: "3" }
+    security_opt: ["no-new-privileges:true"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=3)"]
+      interval: 5s
+      timeout: 4s
+      retries: 10
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    init: true
+    logging:
+      driver: json-file
+      options: { max-size: "2m", max-file: "3" }
+    security_opt: ["no-new-privileges:true"]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/dashboard').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 4s
+      retries: 10
+volumes:
+  spatial-data:

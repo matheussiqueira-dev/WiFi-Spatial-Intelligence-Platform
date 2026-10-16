@@ -1,0 +1,74 @@
+{
+  "schema_version": "1.0.0",
+  "evidence_level": "L0_SYNTHETIC",
+  "validation_status": "IMPLEMENTED_SYNTHETIC",
+  "mode": "HISTORICAL",
+  "query": {
+    "start": "2026-01-01T00:00:00Z",
+    "end": "2026-01-02T00:00:00Z",
+    "bucket": "minute",
+    "room_id": "living-room",
+    "source_id": null,
+    "scenario": null,
+    "segment_id": null,
+    "gap_seconds": 5.0,
+    "limit": 100,
+    "offset": 0
+  },
+  "summary": {
+    "samples": 1,
+    "segments": 1,
+    "entries_estimate": 0,
+    "exits_estimate": 0,
+    "unknown_count_samples": 0,
+    "presence_seconds": 0,
+    "absent_seconds": 0,
+    "unknown_seconds": 0,
+    "excluded_transitions": 0,
+    "event_rate": null,
+    "queue_wait_p50_ms": null,
+    "queue_wait_p95_ms": null,
+    "rf_drop_rate": null
+  },
+  "buckets": {
+    "items": [
+      {
+        "timestamp": "2026-01-01T00:00:00+00:00",
+        "source_id": "simulator-01",
+        "samples": 1,
+        "presence_samples": 1,
+        "known_count_samples": 1,
+        "unknown_count_samples": 0,
+        "occupancy_max": 2,
+        "entries_estimate": 0,
+        "exits_estimate": 0,
+        "evidence_level": "L0_SYNTHETIC",
+        "occupancy_mean": 2.0,
+        "presence_fraction": 1.0
+      }
+    ],
+    "total": 1,
+    "limit": 100,
+    "offset": 0
+  },
+  "intervals": {
+    "items": [],
+    "total": 0,
+    "limit": 100,
+    "offset": 0
+  },
+  "transitions": {
+    "items": [],
+    "total": 0,
+    "limit": 100,
+    "offset": 0
+  },
+  "limitations": [
+    "Sample-weighted counts; not time-weighted occupancy or validated inference.",
+    "Count deltas are net estimates, not individual door crossings or identities.",
+    "Gaps, unknown counts, segment boundaries and nonincreasing ticks break transitions.",
+    "Legacy records lack session attribution; no transitions inferred for them.",
+    "No extrapolation before first/after last sample; missing buckets are unknown.",
+    "Queue wait measures time before persistence, not sensing or total processing latency."
+  ]
+}

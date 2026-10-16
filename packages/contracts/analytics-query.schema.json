@@ -1,0 +1,103 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "start": {
+      "format": "date-time",
+      "title": "Start",
+      "type": "string"
+    },
+    "end": {
+      "format": "date-time",
+      "title": "End",
+      "type": "string"
+    },
+    "bucket": {
+      "default": "minute",
+      "enum": [
+        "minute",
+        "five_minutes",
+        "hour",
+        "day"
+      ],
+      "title": "Bucket",
+      "type": "string"
+    },
+    "room_id": {
+      "const": "living-room",
+      "default": "living-room",
+      "title": "Room Id",
+      "type": "string"
+    },
+    "source_id": {
+      "anyOf": [
+        {
+          "enum": [
+            "native-01",
+            "simulator-01",
+            "ruview-01"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Source Id"
+    },
+    "scenario": {
+      "anyOf": [
+        {
+          "maxLength": 40,
+          "pattern": "^[a-z_-]+$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Scenario"
+    },
+    "segment_id": {
+      "anyOf": [
+        {
+          "pattern": "^[a-f0-9-]{36}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Segment Id"
+    },
+    "gap_seconds": {
+      "default": 5,
+      "maximum": 60,
+      "minimum": 1,
+      "title": "Gap Seconds",
+      "type": "number"
+    },
+    "limit": {
+      "default": 100,
+      "maximum": 200,
+      "minimum": 1,
+      "title": "Limit",
+      "type": "integer"
+    },
+    "offset": {
+      "default": 0,
+      "maximum": 10000,
+      "minimum": 0,
+      "title": "Offset",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "start",
+    "end"
+  ],
+  "title": "AnalyticsQuery",
+  "type": "object"
+}

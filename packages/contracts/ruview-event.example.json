@@ -1,0 +1,39 @@
+{
+  "schema_version": "1.1.0",
+  "event_id": "00000000-0000-4000-8000-000000000002",
+  "timestamp": "2026-01-01T00:00:00Z",
+  "source_id": "ruview-01",
+  "room_id": "living-room",
+  "event_type": "simulation.ruview.observation",
+  "source_type": "SIMULATED",
+  "evidence_level": "L0_SYNTHETIC",
+  "validation_status": "IMPLEMENTED_SYNTHETIC",
+  "measurements": {
+    "presence_detected": true,
+    "occupancy_estimate": 1,
+    "ground_truth_positions": []
+  },
+  "quality": {
+    "signal_quality": null,
+    "confidence": null
+  },
+  "model": {
+    "id": null,
+    "version": null
+  },
+  "provenance": {
+    "generator": "ruview-simulated",
+    "scenario": "ruview-simulated",
+    "seed": null,
+    "tick": 113,
+    "dataset_id": null,
+    "upstream_source": "simulated",
+    "upstream_type": "sensing_update",
+    "adapter_version": "1.0.0"
+  },
+  "privacy": {
+    "classification": "synthetic",
+    "consent_record_id": null
+  },
+  "processing_latency_ms": null
+}
