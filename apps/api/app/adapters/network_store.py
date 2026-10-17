@@ -1,11 +1,13 @@
 import threading
 from datetime import datetime
+from typing import cast
 
-from sqlalchemy import Engine, String, Text, select
+from sqlalchemy import CursorResult, Engine, String, Text, delete, select
 from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.orm import Mapped, mapped_column, sessionmaker
 
 from app.adapters.sqlite.database import row_count
+from app.adapters.sqlite.models import audit_row
 from app.network_contracts import ChannelSurvey, NetworkSample
 from app.storage import Base
 
@@ -30,6 +32,22 @@ class ChannelSurveyRow(Base):
     timestamp: Mapped[str] = mapped_column(String(40), index=True)
     location: Mapped[str] = mapped_column(String(48), index=True)
     payload: Mapped[str] = mapped_column(Text)
+
+
+class WebhookDeliveryRow(Base):
+    __tablename__ = "webhook_deliveries"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    created_at: Mapped[str] = mapped_column(String(40), index=True)
+    event: Mapped[str] = mapped_column(String(32))
+    alert_code: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    location: Mapped[str | None] = mapped_column(String(48), nullable=True)
+    delivered: Mapped[bool] = mapped_column()
+    http_status: Mapped[int | None] = mapped_column(nullable=True)
+    error: Mapped[str | None] = mapped_column(String(32), nullable=True)
+
+
+# Operational delivery log, not evidence: only the most recent entries are kept.
+MAX_DELIVERIES = 1000
 
 
 class NetworkStore:
@@ -141,3 +159,49 @@ class NetworkStore:
             if len(rows) > 2000:
                 raise ValueError("query exceeds 2000 surveys; shorten the period")
             return [ChannelSurvey.model_validate_json(row.payload) for row in rows]
+
+    def record_delivery(self, entry: dict) -> None:
+        with self.lock, self.session.begin() as session:
+            session.add(WebhookDeliveryRow(**entry))
+            session.flush()
+            keep = (
+                select(WebhookDeliveryRow.id)
+                .order_by(WebhookDeliveryRow.created_at.desc(), WebhookDeliveryRow.id.desc())
+                .limit(MAX_DELIVERIES)
+            )
+            session.execute(delete(WebhookDeliveryRow).where(WebhookDeliveryRow.id.not_in(keep)))
+
+    def deliveries(self, limit: int = 20) -> list[dict]:
+        with self.session() as session:
+            rows = session.scalars(
+                select(WebhookDeliveryRow)
+                .order_by(WebhookDeliveryRow.created_at.desc(), WebhookDeliveryRow.id.desc())
+                .limit(limit)
+            )
+            return [
+                {
+                    "id": row.id,
+                    "created_at": row.created_at,
+                    "event": row.event,
+                    "alert_code": row.alert_code,
+                    "location": row.location,
+                    "delivered": row.delivered,
+                    "http_status": row.http_status,
+                    "error": row.error,
+                }
+                for row in rows
+            ]
+
+    def erase(self, location: str | None) -> dict[str, int]:
+        """Data-subject erasure of measured history; the audit trail keeps only the fact."""
+        with self.lock, self.session.begin() as session:
+            erased = {}
+            for name, row in (("samples", NetworkSampleRow), ("surveys", ChannelSurveyRow)):
+                statement = delete(row)
+                if location is not None:
+                    statement = statement.where(row.location == location)
+                result = cast(CursorResult, session.execute(statement))
+                erased[name] = result.rowcount
+            action = "network.history.erased" if location is None else "network.location.erased"
+            session.add(audit_row(action))
+            return erased

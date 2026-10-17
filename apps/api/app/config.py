@@ -1,7 +1,8 @@
+import ipaddress
 from typing import Literal
 from urllib.parse import urlsplit
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -36,6 +37,39 @@ class Settings(BaseSettings):
     rate_read: int = Field(default=600, ge=1, le=100000)
     rate_stream: int = Field(default=120, ge=1, le=10000)
     ws_auth_timeout_seconds: float = Field(default=5, ge=0.05, le=10)
+    # Signed POST of network alerts to one local receiver (e.g. Home Assistant); off if empty.
+    alert_webhook_url: str = ""
+    alert_webhook_secret: str = Field(default="", max_length=512, repr=False)
+    alert_webhook_interval_seconds: float = Field(default=60, ge=10, le=3600)
+
+    @field_validator("alert_webhook_url")
+    @classmethod
+    def private_webhook_only(cls, value: str):
+        if not value:
+            return value
+        url = urlsplit(value)
+        try:
+            # IP literals only: a hostname could be re-pointed by DNS to a public target.
+            address = ipaddress.ip_address(url.hostname or "")
+        except ValueError as error:
+            raise ValueError("webhook host must be a loopback or private IP literal") from error
+        if (
+            url.scheme not in {"http", "https"}
+            or not (address.is_loopback or address.is_private)
+            or address.is_link_local
+            or address.is_unspecified
+            or url.username is not None
+            or url.password is not None
+            or url.fragment
+        ):
+            raise ValueError("webhook URL must be http(s) to a loopback or private IP")
+        return value
+
+    @model_validator(mode="after")
+    def webhook_needs_secret(self):
+        if self.alert_webhook_url and len(self.alert_webhook_secret) < 32:
+            raise ValueError("alert webhook requires a secret of at least 32 characters")
+        return self
 
     @field_validator("ruview_http_url", "ruview_ws_url")
     @classmethod

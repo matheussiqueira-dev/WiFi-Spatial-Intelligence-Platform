@@ -7,10 +7,14 @@ import { download } from "../lib/analytics";
 import {
   locationSchema,
   networkReportSchema,
+  locationGrade,
   networkWarnings,
+  rankLocations,
   type NetworkReport,
 } from "../lib/network";
 import ChannelPlanView from "./channel-plan";
+import NetworkHealthView from "./network-health";
+import NetworkWebhookView from "./network-webhook";
 
 const states = {
   CONNECTED: "Conectado",
@@ -99,6 +103,46 @@ export default function NetworkPanel({ token }: { token: string }) {
             ? e.message
             : "Não foi possível definir o ponto.",
       );
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function erase() {
+    const scope = location
+      ? `as medições do ponto "${location}"`
+      : "todo o histórico de rede";
+    if (
+      !window.confirm(
+        `Apagar ${scope}? A exclusão é definitiva; a auditoria registra apenas o fato.`,
+      )
+    )
+      return;
+    setBusy(true);
+    setError("");
+    setMessage("");
+    try {
+      const result = await request(
+        `/network/history?${new URLSearchParams({
+          confirm: "ERASE",
+          ...(location ? { location } : {}),
+        })}`,
+        token,
+        z.object({
+          erased: z.object({
+            samples: z.number().int().nonnegative(),
+            surveys: z.number().int().nonnegative(),
+          }),
+        }),
+        { method: "DELETE" },
+      );
+      setMessage(
+        `${result.erased.samples} medições e ${result.erased.surveys} varreduras apagadas.`,
+      );
+      setLocation("");
+      setOffset(0);
+      setRevision((value) => value + 1);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Falha ao apagar o histórico.");
     } finally {
       setBusy(false);
     }
@@ -238,6 +282,16 @@ export default function NetworkPanel({ token }: { token: string }) {
             >
               Exportar medições CSV
             </button>
+            <button
+              type="button"
+              className="secondary"
+              disabled={busy || !report.total}
+              onClick={() => void erase()}
+            >
+              {location
+                ? "Apagar medições deste ponto"
+                : "Apagar histórico de rede"}
+            </button>
           </div>
           <form className="network-location" onSubmit={configure}>
             <label>
@@ -284,21 +338,27 @@ export default function NetworkPanel({ token }: { token: string }) {
                     <th>Amostras</th>
                     <th>Sinal médio</th>
                     <th>Sondas sem resposta</th>
+                    <th>Avaliação</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {report.comparisons.map((point) => (
+                  {rankLocations(report.comparisons).map((point) => (
                     <tr key={point.location}>
                       <td>{point.location}</td>
                       <td>{point.summary.samples}</td>
                       <td>{metric(point.summary.signal_mean_percent, "%")}</td>
                       <td>{metric(point.summary.gateway_loss_percent, "%")}</td>
+                      <td data-testid="location-grade">
+                        {locationGrade(point.summary)}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           )}
+          <NetworkHealthView token={token} location={location} />
+          <NetworkWebhookView token={token} />
           <ChannelPlanView token={token} location={location} />
           <details>
             <summary>Histórico das medições</summary>

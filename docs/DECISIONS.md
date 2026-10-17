@@ -1,5 +1,20 @@
 # Decisões de arquitetura — v3.0
 
+## ADR-014 — Alertas de rede consultivos, webhook local e protocolo SWF1
+
+Status: Accepted. Data: 17/10/2026. Plano v4: grupo A primeiro; F5 e F6 parciais.
+
+- Degradação = última hora contra a linha de base do mesmo filtro, com limiares
+  publicados na resposta e abstenção explícita quando faltam dados. Calculada sob demanda;
+  nada é persistido além das amostras.
+- O webhook notifica transições por ponto (não por janela global), para que trocar de
+  cômodo não pareça degradação. Regras sintéticas continuam DRY_RUN: só alertas de rede
+  medidos saem do processo, e só para um receptor local configurado no servidor.
+- Log de entregas é operacional e limitado (1.000, mais recentes), diferente do
+  histórico de evidência, que nunca é podado automaticamente.
+- SWF1 é formato próprio com HMAC por dispositivo; quadros de placa real são recusados
+  até validação (NOT_TESTED). Não há listener de rede nesta etapa.
+
 ## ADR-013 — Histórico de regras, tipagem verificada e imagens fixadas
 
 Status: Accepted. Data: 16/10/2026. Fecha contracts-data-13 e pendências do PR #6.

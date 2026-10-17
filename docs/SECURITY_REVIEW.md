@@ -1,5 +1,18 @@
 # Revisão de segurança, privacidade e qualidade
 
+## Adendo — 17/10/2026 (webhook, exclusão, SWF1)
+
+- Webhook de alertas é a primeira saída HTTP iniciada pela API. Mitigações de SSRF:
+  destino fixo em configuração do servidor (nunca pelo dashboard), apenas IP literal de
+  loopback/rede privada (DNS recusado contra rebinding; link-local/metadados e 0.0.0.0
+  recusados), sem credenciais na URL, sem redirect, sem proxy, timeout de 3 s. O status
+  expõe só esquema/host/porta, pois o caminho pode conter o segredo do receptor.
+  Assinatura HMAC-SHA256 com timestamp; segredo ≥ 32 caracteres, fora de logs.
+- Exclusão do histórico de rede exige `confirm=ERASE`, autenticação e capacidade de
+  rede; audita só a ação. Não há desfazer: orientar exportação prévia.
+- SWF1 autentica cada quadro antes de interpretar campos, recusa replay/ordem e
+  hardware não testado; fuzzing determinístico no CI. Não há listener exposto.
+
 ## Adendo — 16/10/2026
 
 Perfil de capacidades aplicado no backend (403 após autenticação; WS 1008). Páginas

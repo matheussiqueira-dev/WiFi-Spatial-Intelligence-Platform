@@ -23,7 +23,12 @@ GATED = [
     ("get", "/api/v1/automation/rules", None, None, "automation.dry_run_rules"),
 ]
 OPEN = ["/api/v1/system/status", "/api/v1/capabilities", "/api/v1/governance/status"]
-NETWORK = ["/api/v1/network/report", "/api/v1/network/channel-plan", "/api/v1/network/config"]
+NETWORK = [
+    "/api/v1/network/report",
+    "/api/v1/network/channel-plan",
+    "/api/v1/network/config",
+    "/api/v1/network/health",
+]
 
 
 def call(client, method, path, body, params):
