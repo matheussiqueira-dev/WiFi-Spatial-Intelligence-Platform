@@ -29,6 +29,13 @@ import {
   capabilityCatalogSchema,
   enabledCapabilities,
 } from "../lib/capabilities";
+import {
+  allows,
+  identityLabel,
+  identitySchema,
+  type Identity,
+} from "../lib/access";
+import { RoleContext } from "./role-context";
 // memo: the only prop is the stable token, so live stream packets do not re-render panels.
 const AnalyticsPanel = memo(
   dynamic(() => import("./analytics-panel"), {
@@ -53,6 +60,11 @@ const CapabilitiesPanel = memo(
 const AutomationPanel = memo(
   dynamic(() => import("./automation-panel"), {
     loading: () => <p role="status">Carregando regras…</p>,
+  }),
+);
+const AccessPanel = memo(
+  dynamic(() => import("./access-panel"), {
+    loading: () => <p role="status">Carregando perfis de acesso…</p>,
   }),
 );
 
@@ -81,6 +93,11 @@ export default function Dashboard() {
   // Profile-enabled capabilities, loaded at login; null while disconnected.
   const [allowed, setAllowed] = useState<Set<string> | null>(null);
   const spatial = allowed?.has("spatial.presence") ?? false;
+  // Role of the signed-in token (GET /access/me); hides controls the API would refuse.
+  const [identity, setIdentity] = useState<Identity | null>(null);
+  const role = identity?.role ?? null;
+  const canOperate = allows(role, "operator");
+  const isAdmin = allows(role, "admin");
   const [config, setConfig] = useState<SimulationConfig>({
     scenario: "walking",
     seed: 42,
@@ -233,6 +250,7 @@ export default function Dashboard() {
     setError("");
     setConnection("Desconectado");
     setAllowed(null);
+    setIdentity(null);
   }
 
   async function authenticate(event: React.FormEvent) {
@@ -243,12 +261,14 @@ export default function Dashboard() {
     setBusy(true);
     setError("");
     try {
-      const [next, catalog] = await Promise.all([
+      const [next, catalog, me] = await Promise.all([
         request("/system/status", submitted, statusSchema),
         request("/capabilities", submitted, capabilityCatalogSchema),
+        request("/access/me", submitted, identitySchema),
       ]);
       setStatus(next);
       setAllowed(enabledCapabilities(catalog));
+      setIdentity(me);
       pendingFocus.current = "workspace";
       setToken(submitted);
       setInputToken("");
@@ -370,6 +390,7 @@ export default function Dashboard() {
             <a href="#analytics">Análises e replay</a>
           )}
           <a href="#capabilities">Capacidades</a>
+          {isAdmin && <a href="#access">Perfis de acesso</a>}
           <a href="#governance">Evidência e privacidade</a>
         </nav>
         <div className="sidebar-note">
@@ -394,6 +415,11 @@ export default function Dashboard() {
           <div className="connection">
             <span className={`dot ${disconnected ? "offline" : ""}`} />
             <span role="status">{connection}</span>
+            {identity && (
+              <span className="evidence role-badge" data-testid="role">
+                {identityLabel(identity)}
+              </span>
+            )}
             {token && (
               <button className="text-button" onClick={resetSession}>
                 Sair
@@ -430,9 +456,9 @@ export default function Dashboard() {
             <div>
               <h2>Conecte seu laboratório</h2>
               <p>
-                Inicie a API e informe o token local definido em{" "}
-                <code>SPATIAL_TOKEN</code> no arquivo <code>.env</code>. O token
-                fica apenas na memória desta página.
+                Inicie a API e informe seu token pessoal ou, como administrador,
+                o <code>SPATIAL_TOKEN</code> do arquivo <code>.env</code>. O
+                token fica apenas na memória desta página.
               </p>
             </div>
             <form onSubmit={authenticate}>
@@ -453,7 +479,7 @@ export default function Dashboard() {
             </form>
           </section>
         ) : (
-          <>
+          <RoleContext value={role}>
             <NetworkPanel token={token} />
             {!spatial ? (
               <section
@@ -554,146 +580,164 @@ export default function Dashboard() {
                   </section>
                   <section id="simulation" className="panel controls">
                     <h2>Simulação</h2>
-                    <label htmlFor="source">Fonte de dados</label>
-                    <select
-                      id="source"
-                      value={status?.provider ?? "synthetic-native"}
-                      disabled={busy || status?.state !== "stopped"}
-                      onChange={(e) =>
-                        void selectSource(
-                          e.target.value as
-                            "synthetic-native" | "RUVIEW_STREAM",
-                        )
-                      }
-                    >
-                      <option value="synthetic-native">
-                        Motor sintético nativo
-                      </option>
-                      <option
-                        value="RUVIEW_STREAM"
-                        disabled={!status?.legacy_lab_enabled}
-                      >
-                        Laboratório legado · RuView simulado
-                      </option>
-                    </select>
-                    <p>
-                      {ruview
-                        ? "Inicie o serviço RuView em modo simulated. Cenário, semente e cadência são definidos pelo serviço externo."
-                        : "Configure uma cena reproduzível."}
-                    </p>
-                    {!ruview && (
+                    {!canOperate && (
+                      <p data-testid="read-only">
+                        Seu papel permite acompanhar a simulação; iniciar,
+                        pausar e trocar a fonte exigem o papel Operação.
+                      </p>
+                    )}
+                    {canOperate && (
                       <>
-                        <fieldset
+                        <label htmlFor="source">Fonte de dados</label>
+                        <select
+                          id="source"
+                          value={status?.provider ?? "synthetic-native"}
                           disabled={busy || status?.state !== "stopped"}
+                          onChange={(e) =>
+                            void selectSource(
+                              e.target.value as
+                                "synthetic-native" | "RUVIEW_STREAM",
+                            )
+                          }
                         >
-                          <label htmlFor="scenario">Cenário</label>
-                          <select
-                            id="scenario"
-                            value={config.scenario}
-                            onChange={(e) =>
-                              setConfig({
-                                ...config,
-                                scenario: e.target
-                                  .value as SimulationConfig["scenario"],
-                              })
-                            }
+                          <option value="synthetic-native">
+                            Motor sintético nativo
+                          </option>
+                          <option
+                            value="RUVIEW_STREAM"
+                            disabled={!status?.legacy_lab_enabled}
                           >
-                            {Object.entries(scenarios).map(([value, label]) => (
-                              <option key={value} value={value}>
-                                {label}
-                              </option>
-                            ))}
-                          </select>
-                          <div className="form-grid">
-                            <div>
-                              <label htmlFor="occupants">Ocupantes</label>
-                              <input
-                                id="occupants"
-                                type="number"
-                                min={0}
-                                max={20}
-                                value={config.occupants}
+                            Laboratório legado · RuView simulado
+                          </option>
+                        </select>
+                        <p>
+                          {ruview
+                            ? "Inicie o serviço RuView em modo simulated. Cenário, semente e cadência são definidos pelo serviço externo."
+                            : "Configure uma cena reproduzível."}
+                        </p>
+                        {!ruview && (
+                          <>
+                            <fieldset
+                              disabled={busy || status?.state !== "stopped"}
+                            >
+                              <label htmlFor="scenario">Cenário</label>
+                              <select
+                                id="scenario"
+                                value={config.scenario}
                                 onChange={(e) =>
                                   setConfig({
                                     ...config,
-                                    occupants: Number(e.target.value),
+                                    scenario: e.target
+                                      .value as SimulationConfig["scenario"],
                                   })
                                 }
-                              />
-                            </div>
-                            <div>
-                              <label htmlFor="seed">Semente</label>
-                              <input
-                                id="seed"
-                                type="number"
-                                min={0}
-                                max={4294967295}
-                                value={config.seed}
+                              >
+                                {Object.entries(scenarios).map(
+                                  ([value, label]) => (
+                                    <option key={value} value={value}>
+                                      {label}
+                                    </option>
+                                  ),
+                                )}
+                              </select>
+                              <div className="form-grid">
+                                <div>
+                                  <label htmlFor="occupants">Ocupantes</label>
+                                  <input
+                                    id="occupants"
+                                    type="number"
+                                    min={0}
+                                    max={20}
+                                    value={config.occupants}
+                                    onChange={(e) =>
+                                      setConfig({
+                                        ...config,
+                                        occupants: Number(e.target.value),
+                                      })
+                                    }
+                                  />
+                                </div>
+                                <div>
+                                  <label htmlFor="seed">Semente</label>
+                                  <input
+                                    id="seed"
+                                    type="number"
+                                    min={0}
+                                    max={4294967295}
+                                    value={config.seed}
+                                    onChange={(e) =>
+                                      setConfig({
+                                        ...config,
+                                        seed: Number(e.target.value),
+                                      })
+                                    }
+                                  />
+                                </div>
+                              </div>
+                              <label htmlFor="speed">Velocidade</label>
+                              <select
+                                id="speed"
+                                value={config.speed}
                                 onChange={(e) =>
                                   setConfig({
                                     ...config,
-                                    seed: Number(e.target.value),
+                                    speed: Number(e.target.value),
                                   })
                                 }
-                              />
-                            </div>
-                          </div>
-                          <label htmlFor="speed">Velocidade</label>
-                          <select
-                            id="speed"
-                            value={config.speed}
-                            onChange={(e) =>
-                              setConfig({
-                                ...config,
-                                speed: Number(e.target.value),
-                              })
+                              >
+                                {[0.25, 0.5, 1, 2, 4].map((n) => (
+                                  <option key={n} value={n}>
+                                    {n}×
+                                  </option>
+                                ))}
+                              </select>
+                            </fieldset>
+                          </>
+                        )}
+                        <div className="actions">
+                          <button
+                            disabled={
+                              busy || !status || status.state !== "stopped"
                             }
+                            onClick={() => void control("start")}
                           >
-                            {[0.25, 0.5, 1, 2, 4].map((n) => (
-                              <option key={n} value={n}>
-                                {n}×
-                              </option>
-                            ))}
-                          </select>
-                        </fieldset>
+                            Iniciar simulação
+                          </button>
+                          <button
+                            className="secondary"
+                            disabled={busy || status?.state !== "running"}
+                            onClick={() => void control("pause")}
+                          >
+                            Pausar
+                          </button>
+                          <button
+                            className="secondary"
+                            disabled={busy || status?.state !== "paused"}
+                            onClick={() => void control("resume")}
+                          >
+                            Continuar
+                          </button>
+                          <button
+                            className="secondary"
+                            disabled={
+                              busy || !status || status.state === "stopped"
+                            }
+                            onClick={() => void control("stop")}
+                          >
+                            Parar
+                          </button>
+                          <button
+                            className="secondary"
+                            disabled={
+                              busy || !status || status.state !== "stopped"
+                            }
+                            onClick={() => void control("reset")}
+                          >
+                            Reiniciar estado
+                          </button>
+                        </div>
                       </>
                     )}
-                    <div className="actions">
-                      <button
-                        disabled={busy || !status || status.state !== "stopped"}
-                        onClick={() => void control("start")}
-                      >
-                        Iniciar simulação
-                      </button>
-                      <button
-                        className="secondary"
-                        disabled={busy || status?.state !== "running"}
-                        onClick={() => void control("pause")}
-                      >
-                        Pausar
-                      </button>
-                      <button
-                        className="secondary"
-                        disabled={busy || status?.state !== "paused"}
-                        onClick={() => void control("resume")}
-                      >
-                        Continuar
-                      </button>
-                      <button
-                        className="secondary"
-                        disabled={busy || !status || status.state === "stopped"}
-                        onClick={() => void control("stop")}
-                      >
-                        Parar
-                      </button>
-                      <button
-                        className="secondary"
-                        disabled={busy || !status || status.state !== "stopped"}
-                        onClick={() => void control("reset")}
-                      >
-                        Reiniciar estado
-                      </button>
-                    </div>
                     <dl className="telemetry">
                       <div>
                         <dt>Taxa medida (janela até 60 s)</dt>
@@ -811,15 +855,17 @@ export default function Dashboard() {
                       <h2>Histórico de eventos</h2>
                       <p>{total} eventos persistidos localmente em SQLite</p>
                     </div>
-                    <button
-                      className="text-button"
-                      disabled={
-                        busy || status?.state !== "stopped" || total === 0
-                      }
-                      onClick={() => void clearHistory()}
-                    >
-                      Apagar eventos sintéticos
-                    </button>
+                    {isAdmin && (
+                      <button
+                        className="text-button"
+                        disabled={
+                          busy || status?.state !== "stopped" || total === 0
+                        }
+                        onClick={() => void clearHistory()}
+                      >
+                        Apagar eventos sintéticos
+                      </button>
+                    )}
                   </div>
                   {history.length ? (
                     <div
@@ -914,18 +960,19 @@ export default function Dashboard() {
                 </section>
               </>
             )}
-          </>
+            {allowed?.has("spatial.occupancy_analytics") && (
+              <AnalyticsPanel token={token} />
+            )}
+            {allowed?.has("spatial.activity_baseline") && (
+              <ModelLabPanel token={token} />
+            )}
+            {allowed?.has("automation.dry_run_rules") && (
+              <AutomationPanel token={token} />
+            )}
+            <CapabilitiesPanel token={token} />
+            {isAdmin && <AccessPanel token={token} />}
+          </RoleContext>
         )}
-        {token && allowed?.has("spatial.occupancy_analytics") && (
-          <AnalyticsPanel token={token} />
-        )}
-        {token && allowed?.has("spatial.activity_baseline") && (
-          <ModelLabPanel token={token} />
-        )}
-        {token && allowed?.has("automation.dry_run_rules") && (
-          <AutomationPanel token={token} />
-        )}
-        {token && <CapabilitiesPanel token={token} />}
         <footer id="governance">
           <div>
             <h2>Evidência e privacidade</h2>

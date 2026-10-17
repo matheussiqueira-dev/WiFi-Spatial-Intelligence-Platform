@@ -2,15 +2,15 @@
 
 import asyncio
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import HTTPException, Query
 
-from app.api.deps import ContainerDep, gated
+from app.api.deps import ContainerDep, GatedRouter, operator, viewer
 from app.rule_contracts import RuleRequest
 
-router = APIRouter(dependencies=gated("automation.dry_run_rules"))
+router = GatedRouter("automation.dry_run_rules")
 
 
-@router.post("/api/v1/automation/rules")
+@router.post("/api/v1/automation/rules", dependencies=operator)
 async def create_rule(rule: RuleRequest, c: ContainerDep):
     async with c.rules_lock:
         try:
@@ -19,12 +19,12 @@ async def create_rule(rule: RuleRequest, c: ContainerDep):
             raise HTTPException(422, str(error)) from error
 
 
-@router.get("/api/v1/automation/rules")
+@router.get("/api/v1/automation/rules", dependencies=viewer)
 def get_rules(c: ContainerDep):
     return c.store.local_rules()
 
 
-@router.post("/api/v1/automation/rules/{identifier}/revoke")
+@router.post("/api/v1/automation/rules/{identifier}/revoke", dependencies=operator)
 async def revoke_rule(identifier: str, c: ContainerDep):
     # Same lock as ingestion: no in-flight decision can commit after revocation returns.
     async with c.pipeline.quiesced():
@@ -33,7 +33,7 @@ async def revoke_rule(identifier: str, c: ContainerDep):
     return {"revoked": True, "mode": "DRY_RUN"}
 
 
-@router.get("/api/v1/automation/decisions")
+@router.get("/api/v1/automation/decisions", dependencies=viewer)
 def get_decisions(
     c: ContainerDep,
     limit: int = Query(20, ge=1, le=200),

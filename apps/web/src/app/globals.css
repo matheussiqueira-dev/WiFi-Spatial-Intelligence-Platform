@@ -947,3 +947,18 @@ code {
   color: #566e82;
   font-size: 12px;
 }
+
+/* Role-hidden controls must stay hidden even under flex/grid rules. */
+[hidden] {
+  display: none !important;
+}
+
+/* Role badge in the header wraps on narrow screens instead of widening the page. */
+.connection {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.connection .role-badge {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}

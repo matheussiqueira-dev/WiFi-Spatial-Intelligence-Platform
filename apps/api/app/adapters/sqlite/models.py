@@ -5,6 +5,8 @@ from datetime import UTC, datetime
 from sqlalchemy import String, Text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
+from app.domain.access import acting_subject
+
 
 class Base(DeclarativeBase):
     pass
@@ -34,6 +36,8 @@ class AuditRow(Base):
     action: Mapped[str] = mapped_column(String(64))
     # Identifier of the affected record (e.g. a rule); never tokens, IPs or payloads.
     subject_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    # Who acted: an access token id or "bootstrap"; NULL for background work and pre-0011.
+    actor_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
 
 
 class SecurityDenialRow(Base):
@@ -74,5 +78,21 @@ class ExperimentJobRow(Base):
     payload: Mapped[str] = mapped_column(Text)
 
 
+class AccessTokenRow(Base):
+    __tablename__ = "access_tokens"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    label: Mapped[str] = mapped_column(String(48))
+    role: Mapped[str] = mapped_column(String(16))
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    created_at: Mapped[str] = mapped_column(String(40))
+    revoked_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    last_used_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
+
+
 def audit_row(action: str, subject_id: str | None = None) -> AuditRow:
-    return AuditRow(timestamp=datetime.now(UTC).isoformat(), action=action, subject_id=subject_id)
+    return AuditRow(
+        timestamp=datetime.now(UTC).isoformat(),
+        action=action,
+        subject_id=subject_id,
+        actor_id=acting_subject.get(),
+    )

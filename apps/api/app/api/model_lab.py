@@ -2,16 +2,16 @@
 
 import asyncio
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import HTTPException, Query
 
-from app.api.deps import ContainerDep, ProtectiveDenial, gated
+from app.api.deps import ContainerDep, GatedRouter, ProtectiveDenial, operator, viewer
 from app.application.model_lab import ExperimentRequest
 from app.lab_contracts import ExperimentResult
 
-router = APIRouter(dependencies=gated("spatial.activity_baseline"))
+router = GatedRouter("spatial.activity_baseline")
 
 
-@router.post("/api/v1/model-lab/jobs")
+@router.post("/api/v1/model-lab/jobs", dependencies=operator)
 async def submit_experiment(query: ExperimentRequest, c: ContainerDep):
     try:
         return await c.experiment_jobs.submit(query)
@@ -19,7 +19,7 @@ async def submit_experiment(query: ExperimentRequest, c: ContainerDep):
         raise ProtectiveDenial(str(error)) from error
 
 
-@router.get("/api/v1/model-lab/jobs/{identifier}")
+@router.get("/api/v1/model-lab/jobs/{identifier}", dependencies=viewer)
 def get_job(identifier: str, c: ContainerDep):
     if c.experiment_jobs.last_error:
         raise HTTPException(503, "job status persistence unavailable")
@@ -29,14 +29,14 @@ def get_job(identifier: str, c: ContainerDep):
     return job
 
 
-@router.post("/api/v1/model-lab/jobs/{identifier}/cancel")
+@router.post("/api/v1/model-lab/jobs/{identifier}/cancel", dependencies=operator)
 def cancel_job(identifier: str, c: ContainerDep):
     if not c.experiment_jobs.cancel(identifier):
         raise HTTPException(409, "job is already terminal or absent")
     return {"cancel_requested": True}
 
 
-@router.post("/api/v1/model-lab/runs", response_model=ExperimentResult)
+@router.post("/api/v1/model-lab/runs", response_model=ExperimentResult, dependencies=operator)
 async def run_experiment(query: ExperimentRequest, c: ContainerDep):
     if c.model_lock.locked():
         raise ProtectiveDenial("one experiment at a time")
@@ -47,7 +47,7 @@ async def run_experiment(query: ExperimentRequest, c: ContainerDep):
             raise HTTPException(422, str(error)) from error
 
 
-@router.get("/api/v1/model-lab/runs")
+@router.get("/api/v1/model-lab/runs", dependencies=viewer)
 def list_experiments(
     c: ContainerDep,
     limit: int = Query(20, ge=1, le=100),
@@ -56,7 +56,9 @@ def list_experiments(
     return c.store.model_runs(limit, offset)
 
 
-@router.get("/api/v1/model-lab/runs/{identifier}", response_model=ExperimentResult)
+@router.get(
+    "/api/v1/model-lab/runs/{identifier}", response_model=ExperimentResult, dependencies=viewer
+)
 def get_experiment(identifier: str, c: ContainerDep):
     result = c.store.model_run(identifier)
     if result is None:

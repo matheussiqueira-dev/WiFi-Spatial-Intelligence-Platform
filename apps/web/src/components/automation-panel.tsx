@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { request } from "../lib/api";
+import { useAllows } from "./role-context";
 import {
   ruleSchema,
   rulesSchema,
@@ -22,6 +23,7 @@ function fetchAutomation(token: string, offset: number) {
 }
 
 export default function AutomationPanel({ token }: { token: string }) {
+  const canOperate = useAllows("operator");
   const [rules, setRules] = useState<z.infer<typeof rulesSchema> | null>(null);
   const [decisions, setDecisions] = useState<z.infer<
     typeof decisionsSchema
@@ -82,6 +84,7 @@ export default function AutomationPanel({ token }: { token: string }) {
       </label>
       <div className="toolbar">
         <button
+          hidden={!canOperate}
           disabled={
             busy ||
             !Number.isInteger(threshold) ||
@@ -137,6 +140,7 @@ export default function AutomationPanel({ token }: { token: string }) {
             <small>{ruleTimeline(rule)}</small>{" "}
             <button
               className="secondary"
+              hidden={!canOperate}
               disabled={busy || !rule.active}
               onClick={() =>
                 perform(async () => {

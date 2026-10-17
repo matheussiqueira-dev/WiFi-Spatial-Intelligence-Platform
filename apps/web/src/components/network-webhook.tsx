@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { request } from "../lib/api";
+import { useAllows } from "./role-context";
 import { webhookStatusSchema, type WebhookStatus } from "../lib/network";
 
 const events = {
@@ -12,6 +13,7 @@ const events = {
 };
 
 export default function NetworkWebhookView({ token }: { token: string }) {
+  const isAdmin = useAllows("admin");
   const [status, setStatus] = useState<WebhookStatus | null>(null);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -89,6 +91,7 @@ export default function NetworkWebhookView({ token }: { token: string }) {
             <button
               type="button"
               className="secondary"
+              hidden={!isAdmin}
               disabled={busy}
               onClick={() => void sendTest()}
             >

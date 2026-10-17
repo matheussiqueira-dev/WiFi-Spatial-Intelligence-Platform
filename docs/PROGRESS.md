@@ -1,5 +1,32 @@
 # Progresso da plataforma
 
+## Claude Code: perfis de acesso locais (RBAC, F5) — 17/10/2026
+
+Branch `feat/access-roles` (sobre `main` 4f0a091). ADR-015.
+
+- **Papéis** `viewer`/`operator`/`admin`; `SPATIAL_TOKEN` segue como admin de bootstrap.
+  `GatedRouter` exige `require_role` em toda rota (falha na importação se faltar) e
+  aplica a capacidade por último: 401 → 403 de papel → 403 de perfil.
+- **Migração 0011:** tabela `access_tokens` (id, rótulo, papel, HMAC-SHA256 do token,
+  created_at, revoked_at, last_used_at) e `audit_events.actor_id`. Chave do HMAC em
+  `SPATIAL_ACCESS_TOKEN_KEY` ou derivada do `SPATIAL_TOKEN`.
+- **Endpoints:** `GET /api/v1/access/me` (viewer); `GET/POST /api/v1/access/tokens` e
+  `POST /api/v1/access/tokens/{id}/revoke` (admin). Valor mostrado uma vez (`no-store`);
+  revogação mantém o registro e vale na requisição seguinte; WS revalida a cada 2 s.
+- **Dashboard:** selo de papel no cabeçalho, controles de escrita escondidos por papel
+  (simulação, fonte, exclusões, ponto de medição, relatórios, experimentos, regras,
+  teste do webhook) e seção admin **Perfis de acesso**. Token só em estado React.
+- Agente Wi-Fi aceita `SPATIAL_AGENT_TOKEN` (operator). Mensagens 401/403 revisadas.
+- Corrigido no caminho: regra CSS inserida numa lista de seletores escondia
+  `.network-controls` (4 E2E vermelhos) e selo de papel alargava a página no mobile.
+
+Comandos: `pytest`, `ruff`, `mypy`, `npm.cmd test`, `npm.cmd run build:e2e`,
+`npx playwright test` (specs afetados) e `check.ps1` (resultados no VERIFICATION_REPORT).
+Gate `check.ps1` exit 0: mypy (59), 320 backend (21 novos), 6 launchers, 43 web (4 novos),
+20 E2E Chromium+WebKit (2 skip RuView), 1 E2E commercial-br.
+Pendente: expiração/rotação automática de tokens, MFA/SSO, consentimento por pessoa (F5),
+Docker E2E e demo não reexecutados nesta etapa; NVDA; Firefox fora do gate. Commit em `feat/access-roles`.
+
 ## Claude Code: grupo A, F5 e F6 — 17/10/2026
 
 Branch `feat/network-governance` (sobre `feat/capability-enforcement`, PR #6 aberto).

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { z } from "zod";
 import { request } from "../lib/api";
+import { useAllows } from "./role-context";
 import {
   experimentSchema,
   experimentListSchema,
@@ -12,6 +13,7 @@ import {
 import { download } from "../lib/analytics";
 
 export default function ModelLabPanel({ token }: { token: string }) {
+  const canOperate = useAllows("operator");
   const [seed, setSeed] = useState(42);
   const [result, setResult] = useState<Experiment | null>(null);
   const [items, setItems] = useState<{ id: string; created_at: string }[]>([]);
@@ -130,6 +132,7 @@ export default function ModelLabPanel({ token }: { token: string }) {
       </label>
       <div className="toolbar">
         <button
+          hidden={!canOperate}
           disabled={
             busy ||
             !!jobActive ||
@@ -152,6 +155,7 @@ export default function ModelLabPanel({ token }: { token: string }) {
         </button>
         <button
           className="secondary"
+          hidden={!canOperate}
           disabled={busy || !jobActive}
           onClick={() =>
             execute(async () => {
@@ -168,6 +172,7 @@ export default function ModelLabPanel({ token }: { token: string }) {
           Cancelar experimento enfileirado
         </button>
         <button
+          hidden={!canOperate}
           disabled={
             busy || !Number.isInteger(seed) || seed < 0 || seed > 100000
           }

@@ -43,7 +43,7 @@ M11/M14 continuam sem validação física/clínica. Nenhuma capacidade L3 fabric
 | --- | --- | --- | --- |
 | G (F3B) | domain/motion.py, application/model_lab.py, 0004, model-lab-panel.tsx | test_motion_lab.py; model-lab.spec Chromium/Firefox/Docker | IMPLEMENTED_SYNTHETIC; sitting/queda/RF BLOCKED |
 | F4 jobs | application/experiment_jobs.py, 0006 | test_experiment_jobs.py (fila, falha, cancelamento, interrupted) | PARTIAL; vitais/pose/sono BLOCKED |
-| F5 regras | domain/rules.py, rule_contracts.py, 0005, automation-panel.tsx | test_rules.py; automation.spec Chromium/Firefox/Docker | PARTIAL dry-run; RBAC/consentimento/webhook pendentes |
+| F5 regras | domain/rules.py, rule_contracts.py, 0005, automation-panel.tsx | test_rules.py; automation.spec Chromium/Firefox/Docker | PARTIAL dry-run; RBAC local feito (ADR-015, test_access_roles.py); consentimento pendente |
 | F6 pacotes | domain/packet_lab.py | test_packet_lab.py (fuzz 200 bytes) | PARTIAL offline, sem API/UI; hardware NOT_TESTED |
 | Gate | check.ps1, docker-e2e.ps1, Dockerfile.verify 3.13 | 135 backend (3.12 e 3.13), 11 web, 10 E2E Chromium+Firefox, smoke Docker | Exit 0 em todos; WebKit/NVDA BLOCKED |
 
@@ -114,9 +114,9 @@ atual. A numeração M01–M16 v3 difere da v2; usar somente a tabela vigente.
 | M10 | Apnea screening | não implementado | nenhum teste clínico | sem diagnóstico | BLOCKED | Estudos/referência; F4 | Pesquisa |
 | M11 | 17-keypoint pose | não implementado | nenhum teste de pose | sem pose alegada | BLOCKED | Modelo/dados/avaliação; F4 | Pesquisa |
 | M12 | Model lab/CSI/LoRA/RVF | application/model_lab.py, application/experiment_jobs.py, migrações 0004/0006, /api/v1/model-lab/*; /api/v1/models segue sem modelo de inferência | test_motion_lab.py; test_experiment_jobs.py; test_auth_origin_and_validation; model-lab.spec | registro de runs e fila CPU local com modelos JSON internos sintéticos | PARTIAL | CSI/ONNX/LoRA/RVF e upload de modelo BLOCKED; sem dados reais; F4 | Agente / pesquisa |
-| M13 | Home automation/hooks | domain/rules.py, rule_contracts.py, migração 0005, /api/v1/automation/*, automation-panel.tsx | test_rules.py; automation.spec | decisões DRY_RUN com dispatched=false; sem ações externas | PARTIAL | Somente dry-run; webhooks/Home Assistant/plugins, RBAC e consentimento não implementados; F5 | Agente |
+| M13 | Home automation/hooks | domain/rules.py, rule_contracts.py, migração 0005, /api/v1/automation/*, automation-panel.tsx | test_rules.py; automation.spec | decisões DRY_RUN com dispatched=false; sem ações externas | PARTIAL | Somente dry-run para regras; webhook de alertas de rede e RBAC local existem (ADR-014/015); Home Assistant/plugins e consentimento não implementados; F5 | Agente |
 | M14 | Multimodal world model | laboratório 2D sintético, sem fusão | observatory/E2E | representação virtual | PARTIAL | Sensores/calibração/fusão; F7 | Pesquisa |
-| M15 | Governed evidence/privacy | contratos, auth, auditoria/backup | segurança/retenção/restore | L0, token em memória, backup verificado | PARTIAL | Consentimento/RBAC real e witness não implementados; F5 | Proprietário / agente |
+| M15 | Governed evidence/privacy | contratos, auth, auditoria/backup | segurança/retenção/restore | L0, token em memória, backup verificado | PARTIAL | RBAC local por token/papel implementado (ADR-015); consentimento e witness não implementados; F5 | Proprietário / agente |
 | M16 | Operator onboarding/calibration | bootstrap e guias locais | instalação histórica / smoke atual | operação virtual documentada | PARTIAL | Calibração física/onboarding dispositivos; F5/F6 | Proprietário |
 
 VALIDATED_REAL_DATA não foi atribuído a nenhum item. F3B/F4/F5/F6/F7 não foram

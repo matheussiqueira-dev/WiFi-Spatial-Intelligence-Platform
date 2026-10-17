@@ -16,6 +16,10 @@ docker compose up --build --detach --wait
 .\scripts\dev\stop-wifi-monitor.ps1
 ```
 
+Por padrão o coletor usa o `SPATIAL_TOKEN` (admin). Para menor privilégio, emita um token
+de **Operação** em Perfis de acesso e defina `$env:SPATIAL_AGENT_TOKEN` na sessão antes de
+iniciar o coletor; o valor é lido só do ambiente, nunca de argumentos ou logs (ADR-015).
+
 Abra `http://127.0.0.1:3000/dashboard#network`, conecte com o token local e acompanhe
 **Diagnóstico Wi-Fi real**. A coleta acontece a cada 15 segundos; a interface
 consulta a API a cada 10 segundos. O coletor deve executar no Windows: o contêiner

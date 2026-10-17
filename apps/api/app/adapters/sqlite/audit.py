@@ -20,6 +20,7 @@ SECURITY_ACTIONS = {
     "ws.timeout",
     "ws.limit",
     "ws.rate_denied",
+    "role.denied",
 }
 
 
@@ -72,5 +73,6 @@ class AuditRepository:
             return [
                 {"timestamp": r.timestamp, "action": r.action}
                 | ({"subject_id": r.subject_id} if r.subject_id else {})
+                | ({"actor_id": r.actor_id} if r.actor_id else {})
                 for r in session.scalars(select(AuditRow).order_by(AuditRow.id.desc()).limit(100))
             ]

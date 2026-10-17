@@ -1,5 +1,22 @@
 # Revisão de segurança, privacidade e qualidade
 
+## Adendo — 17/10/2026 (perfis de acesso locais)
+
+- Tokens por pessoa com papéis `viewer`/`operator`/`admin` (ADR-015). O banco guarda só
+  HMAC-SHA256 sob chave do servidor (`SPATIAL_ACCESS_TOKEN_KEY` ou derivada do
+  `SPATIAL_TOKEN`); teste confirma que o valor não aparece no dump SQLite, na listagem nem
+  na governança. Prefixo `wsp_` evita consulta ao banco para valores malformados.
+- Autorização na API, não no dashboard: matriz papel × rota executada para todas as rotas
+  autenticadas (401 antes do papel, papel antes da capacidade). Rota sem papel declarado
+  falha na importação. Negativas de papel agregadas em `role.denied`, sem token.
+- Revogação imediata (consulta por requisição; WS revalida a cada 2 s e fecha 1008).
+  Trocar o `SPATIAL_TOKEN` sem chave própria invalida todos os tokens pessoais.
+- Auditoria com `actor_id` (quem agiu) além de `subject_id` (registro afetado).
+- Agente Wi-Fi aceita `SPATIAL_AGENT_TOKEN` (papel operator) para não usar o admin.
+- Residual: sem expiração/rotação automática nem MFA; tokens trafegam em HTTP local; o
+  token recém-emitido aparece em tela e pode ser copiado para a área de transferência do
+  sistema. Continua sem aprovação para exposição fora de loopback.
+
 ## Adendo — 17/10/2026 (webhook, exclusão, SWF1)
 
 - Webhook de alertas é a primeira saída HTTP iniciada pela API. Mitigações de SSRF:
@@ -180,7 +197,7 @@ Uma auditoria sem alertas não comprova ausência de vulnerabilidades desconheci
 
 | Severidade | Classe | Limite ou recomendação |
 | --- | --- | --- |
-| MÉDIA se exposto remotamente | Configuração | Bearer compartilhado e HTTP são adequados ao escopo loopback; não há TLS, rate limit público, identidade multiusuário ou autorização por papel. Não publicar esta configuração como serviço remoto |
+| MÉDIA se exposto remotamente | Configuração | Tokens locais por papel (ADR-015) e HTTP são adequados ao escopo loopback; não há TLS, rate limit público, expiração de token ou MFA. Não publicar esta configuração como serviço remoto |
 | BAIXA | Configuração | Eventos têm retenção por quantidade, mas a tabela de auditoria cresce com controles. Definir expurgo/backup antes de uso prolongado |
 | BAIXA | Recomendação de atualização | TestClient/Starlette avisa depreciação de httpx; avaliar httpx2 numa atualização específica, preservando cobertura e locks |
 | BAIXA | Qualidade | Sessão de simulação é local ao processo. Executar um worker; escalar exige separar estado e distribuição de eventos |

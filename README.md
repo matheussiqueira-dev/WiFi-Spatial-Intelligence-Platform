@@ -111,6 +111,24 @@ Abra `http://127.0.0.1:3000/dashboard`. Informe o valor de `SPATIAL_TOKEN` do ar
 `.env` na tela de conexão. O token permanece apenas na memória da página: atualizar
 a página exige entrar novamente. Nunca publique ou compartilhe esse arquivo.
 
+### Perfis de acesso
+
+O `SPATIAL_TOKEN` é o administrador de bootstrap. Em **Perfis de acesso** (visível só
+para administradores), emita um token por pessoa com o papel adequado; o valor aparece
+uma única vez e o banco guarda apenas um hash com chave do servidor.
+
+| Papel | Pode |
+| --- | --- |
+| Leitura (`viewer`) | consultar painéis, históricos, relatórios, exportações e o stream ao vivo |
+| Operação (`operator`) | o anterior, mais controlar a simulação e a fonte, definir o ponto de medição, criar/revogar regras, salvar relatórios e rodar experimentos |
+| Administração (`admin`) | o anterior, mais gerenciar tokens, apagar históricos e testar o webhook |
+
+A revogação vale na requisição seguinte e fecha streams abertos. O dashboard mostra o
+papel após o login e esconde ações não permitidas; a API recusa com 403 de qualquer forma.
+Trocar o `SPATIAL_TOKEN` invalida todos os tokens pessoais, a menos que
+`SPATIAL_ACCESS_TOKEN_KEY` esteja definida. Para o agente Wi-Fi, use um token de operação
+em `SPATIAL_AGENT_TOKEN` em vez do token de bootstrap. Decisão: ADR-015.
+
 API: health em `http://127.0.0.1:8000/api/v1/health`; esquema em `/openapi.json`. As páginas
 `/docs` e `/redoc` carregam scripts de CDN e só existem com `SPATIAL_API_DOCS_ENABLED=true`. O script aguarda a API
 ficar pronta e encerra somente o processo de backend que criou quando o frontend sai.
