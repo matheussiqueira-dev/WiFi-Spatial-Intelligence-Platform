@@ -2,9 +2,13 @@
 
 import asyncio
 from dataclasses import dataclass, field
+from functools import partial
 from pathlib import Path
 
+from app.adapters import webhook
 from app.adapters.history import SqliteHistoryRepository
+from app.adapters.network_store import NetworkStore
+from app.application.alert_webhook import AlertWebhook
 from app.application.experiment_jobs import ExperimentJobs
 from app.application.model_lab import ModelLab
 from app.application.read_history import ReadHistory
@@ -29,6 +33,8 @@ class Container:
     limiter: LocalLimiter
     history: ReadHistory
     backup_worker: RecurringBackup | None
+    network_store: NetworkStore
+    alert_webhook: AlertWebhook | None
     rules_lock: asyncio.Lock = field(default_factory=asyncio.Lock)
     # Pending WebSocket handshakes hold a slot of the subscriber cap.
     stream_handshakes: set[object] = field(default_factory=set)
@@ -42,6 +48,7 @@ def build_container(settings: Settings) -> Container:
     store = Store(settings.database_url, settings.retention_events)
     model_lock = asyncio.Lock()
     model_lab = ModelLab(store, database_path.parent / "model-lab")
+    network_store = NetworkStore(store.engine)
     return Container(
         settings=settings,
         database_path=database_path,
@@ -66,5 +73,14 @@ def build_container(settings: Settings) -> Container:
             settings.backup_interval_seconds,
         )
         if settings.backup_enabled
+        else None,
+        network_store=network_store,
+        alert_webhook=AlertWebhook(
+            network_store.read,
+            partial(webhook.post, settings.alert_webhook_url, settings.alert_webhook_secret),
+            network_store.record_delivery,
+            settings.alert_webhook_interval_seconds,
+        )
+        if settings.alert_webhook_url
         else None,
     )

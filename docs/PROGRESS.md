@@ -1,5 +1,32 @@
 # Progresso da plataforma
 
+## Claude Code: grupo A, F5 e F6 — 17/10/2026
+
+Branch `feat/network-governance` (sobre `feat/capability-enforcement`, PR #6 aberto).
+
+- **Grupo A — tendência e alertas** (`network.degradation_alerts`, IMPLEMENTED_LIVE):
+  `GET /api/v1/network/health` com séries por hora e alertas consultivos (queda de sinal,
+  latência, perda, desconexões, coletor parado) contra a linha de base do mesmo filtro;
+  abstenção explícita sem dados suficientes. Painel com tendência horária e alertas.
+- **Grupo A — avaliação de pontos:** coluna Bom/Regular/Fraco/Sem dados e ranking do
+  melhor para o pior (heurística sinal × perda).
+- **F5 — webhook local** (`network.alert_webhook`, IMPLEMENTED_LIVE): POST assinado
+  (HMAC-SHA256 + timestamp) de `alert.raised`/`alert.cleared` por ponto, só para IP de
+  loopback/rede privada, sem redirect/proxy; log limitado de entregas (migração 0010);
+  status com destino mascarado e botão de teste no painel.
+- **F5 — exclusão LGPD:** `DELETE /api/v1/network/history?confirm=ERASE[&location]` com
+  auditoria do fato; botão no painel respeita o ponto filtrado e pede confirmação.
+- **F6 — SWF1** (`hardware.csi_frame_protocol`, IMPLEMENTED_SYNTHETIC/L0): formato
+  binário próprio para ESP32-S3 com HMAC por dispositivo, receptor com frescor/replay/
+  ordem, recusa de placa não testada, simulador de transporte com falhas e fuzzing
+  determinístico (25.000 casos). Especificação em `docs/CSI_FRAME_PROTOCOL.md`.
+- Corrigido no caminho: seletor E2E ambíguo (`status`) após o painel ganhar duas regiões.
+
+Gate `check.ps1` exit 0: Ruff/format, mypy (55), 20 contratos, 299 backend, 6 launchers,
+Prettier, 39 web, ESLint, tsc, build, 18 E2E Chromium+WebKit, 1 E2E commercial-br.
+Pendente: listener real de SWF1 e firmware (exigem placa e autorização); RBAC local e
+consentimento por pessoa (F5); NVDA; Firefox fora do gate. Commit `feat/network-governance`.
+
 ## Claude Code: pendências do PR #6 concluídas — 16/10/2026
 
 - **Imagens por digest:** `python:3.12-slim`, `node:22-slim` e o `Dockerfile.verify`

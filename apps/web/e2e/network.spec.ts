@@ -38,7 +38,9 @@ test("network: authenticated telemetry ingestion, location comparison, export an
   await expect(panel.getByTestId("network-link")).toHaveText("Conectado");
   await panel.getByLabel("Nome do ponto atual").fill("Fixture Quarto");
   await panel.getByRole("button", { name: "Definir ponto de medição" }).click();
-  await expect(panel.getByRole("status")).toContainText("próxima coleta");
+  await expect(
+    panel.getByRole("status").filter({ hasText: "próxima coleta" }),
+  ).toBeVisible();
   expect((await request.get(`${base}/network/config`, { headers })).ok()).toBe(
     true,
   );
@@ -58,6 +60,26 @@ test("network: authenticated telemetry ingestion, location comparison, export an
       .getByLabel("Filtrar ponto")
       .getByRole("option", { name: "Fixture Quarto" }),
   ).toHaveCount(1);
+  // Both fixtures lose 1 of 3 probes ("Fraco"); ties rank by signal, best first.
+  const ranking = panel.getByRole("region", {
+    name: "Comparação dos pontos Wi-Fi",
+  });
+  await expect(ranking.getByRole("row").nth(1)).toContainText("Fixture Sala");
+  await expect(ranking.getByTestId("location-grade").first()).toHaveText(
+    "Fraco",
+  );
+  // Two fresh samples: no baseline yet, so the panel abstains instead of alerting.
+  await expect(panel.getByTestId("network-alerts")).toContainText(
+    "Nenhum alerta",
+  );
+  await expect(panel.getByText("Sem comparação para:")).toBeVisible();
+  // No receiver configured in the E2E stack: the panel explains instead of offering a test.
+  await expect(panel.getByTestId("webhook-state")).toContainText(
+    "Não configurado",
+  );
+  await expect(panel.getByRole("button", { name: "Enviar teste" })).toHaveCount(
+    0,
+  );
   const survey = await request.post(`${base}/network/channel-surveys`, {
     headers,
     data: {
@@ -98,6 +120,24 @@ test("network: authenticated telemetry ingestion, location comparison, export an
   );
   expect(await csv.text()).toContain("L2_LIVE_UNVALIDATED");
   expect(await csv.text()).not.toContain("SSID");
+  // Erasure is scoped to the selected point and confirmed through a dialog.
+  page.once("dialog", (dialog) => void dialog.accept());
+  await panel
+    .getByRole("button", { name: "Apagar medições deste ponto" })
+    .click();
+  await expect(
+    panel.getByRole("status").filter({ hasText: "apagadas" }),
+  ).toContainText("1 medições e 1 varreduras apagadas.");
+  await expect(
+    panel
+      .getByLabel("Filtrar ponto")
+      .getByRole("option", { name: "Fixture Sala" }),
+  ).toHaveCount(0);
+  await expect(
+    panel
+      .getByLabel("Filtrar ponto")
+      .getByRole("option", { name: "Fixture Quarto" }),
+  ).toHaveCount(1);
   await page.setViewportSize({ width: 320, height: 800 });
   expect(
     await page.evaluate(

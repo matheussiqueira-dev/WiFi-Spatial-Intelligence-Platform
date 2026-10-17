@@ -43,6 +43,7 @@ def lifespan_for(c: Container):
         await c.pipeline.start_tasks()
         await c.experiment_jobs.start()
         backup_task = asyncio.create_task(c.backup_worker.run()) if c.backup_worker else None
+        webhook_task = asyncio.create_task(c.alert_webhook.run()) if c.alert_webhook else None
         loggers = [
             logging.getLogger(name) for name in ("spatial", "uvicorn.access", "uvicorn.error")
         ]
@@ -54,6 +55,9 @@ def lifespan_for(c: Container):
             yield
         finally:
             await c.experiment_jobs.close()
+            if c.alert_webhook and webhook_task:
+                c.alert_webhook.stop.set()
+                await webhook_task
             if c.backup_worker and backup_task:
                 c.backup_worker.stop.set()
                 await backup_task
@@ -111,7 +115,11 @@ def create_app(settings: Settings | None = None):
         allow_credentials=False,
     )
 
-    app.include_router(network_router(c.store.engine, gated("network.link_diagnostics")))
+    app.include_router(
+        network_router(
+            c.network_store, gated("network.link_diagnostics"), c.alert_webhook, c.settings
+        )
+    )
     for module in (automation, model_lab, analytics):
         app.include_router(module.router)
     app.include_router(catalog.public)

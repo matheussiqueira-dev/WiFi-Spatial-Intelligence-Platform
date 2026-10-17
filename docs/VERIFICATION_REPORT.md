@@ -1,5 +1,15 @@
 # Relatório de verificação
 
+## Grupo A, F5 e F6 (Claude Code) — 17/10/2026
+
+| Comando / inspeção | Resultado |
+| --- | --- |
+| `test_network_health.py` | 9 pass: base estável sem alerta; queda 15 vs 14 pontos; latência exige 2× e +20 ms; perda; desconexões; abstenção; buckets contínuos; rota autenticada e no perfil comercial; exclusão confirmada/escopada/auditada |
+| `test_alert_webhook.py` | 17 pass: assinatura verificável por receptor HTTP real; redirect não seguido; 7 destinos públicos/DNS/metadados/credenciais recusados; só transições; troca de cômodo sem alerta; nova tentativa após falha; log limitado a 1.000; caminho do receptor mascarado |
+| `test_csi_frame.py` | 16 pass: ida e volta; recusas estruturais e semânticas; replay/ordem/frescor/hardware; 20.000 mutações + 5.000 cabeçalhos reassinados sem exceção inesperada nem aceitação; transporte com falhas |
+| Red no E2E de rede | seletor `getByRole("status")` ambíguo após nova região; corrigido com filtro por texto |
+| `check.ps1` | exit 0: mypy (55), 299 backend, 6 launchers, 39 web, build, 18 E2E Chromium+WebKit (1,6 min, 2 skip RuView), 1 E2E commercial-br |
+
 ## Pendências finais do PR #6 (Claude Code) — 16/10/2026
 
 | Comando / inspeção | Resultado |

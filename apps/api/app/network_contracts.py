@@ -112,6 +112,41 @@ class NetworkReport(StrictModel):
     configured_location: str
 
 
+class NetworkTrendBucket(StrictModel):
+    start: datetime
+    end: datetime
+    summary: NetworkSummary
+
+
+class DegradationAlert(StrictModel):
+    """Advisory comparison against the location's own baseline; never dispatched."""
+
+    code: Literal[
+        "SIGNAL_DROP", "LATENCY_RISE", "PACKET_LOSS", "FREQUENT_DISCONNECTS", "COLLECTOR_STALE"
+    ]
+    severity: Literal["info", "warning"]
+    metric: str
+    recent: float | None
+    baseline: float | None
+    threshold: float
+    message: str
+
+
+class NetworkHealth(StrictModel):
+    data_class: Literal["HOST_NETWORK_TELEMETRY"] = "HOST_NETWORK_TELEMETRY"
+    evidence_level: Literal["L2_LIVE_UNVALIDATED"] = "L2_LIVE_UNVALIDATED"
+    mode: Literal["ADVISORY"] = "ADVISORY"
+    start: datetime
+    end: datetime
+    location: str | None
+    bucket_minutes: int
+    buckets: list[NetworkTrendBucket]
+    recent: NetworkSummary
+    baseline: NetworkSummary
+    alerts: list[DegradationAlert]
+    abstentions: list[str]
+
+
 Band = Literal["2.4GHz", "5GHz", "6GHz"]
 
 

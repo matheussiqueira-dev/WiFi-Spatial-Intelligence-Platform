@@ -1,5 +1,15 @@
 # Registro de origem e limites de independência
 
+## Protocolo SWF1 de quadros CSI — 17/10/2026
+
+Layout, autenticação e receptor escritos para este projeto a partir de conceitos
+públicos de CSI do ESP-IDF. Exposição registrada: RUVIEW_FEATURES_ANALYSIS.md descreve
+em alto nível que o firmware RuView envia UDP binário little-endian com tipo no
+cabeçalho e hash BLAKE3 nos contratos; nenhum arquivo de firmware/parser RuView foi
+reaberto nesta entrega e nenhum trecho foi transcrito. O SWF1 difere por desenho
+(tipo único, HMAC-SHA256 por dispositivo, recusa de hardware não testado), mas a
+exposição prévia impede alegar clean-room estrita.
+
 ## Apresentação articulada — 15/10/2026
 
 Rigs humanos/quadrúpedes, projeção SVG, cores/controles implementados por geometria

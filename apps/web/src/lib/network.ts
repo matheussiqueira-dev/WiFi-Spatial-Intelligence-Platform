@@ -155,3 +155,106 @@ export function channelAdvice(plan: BandPlan): string {
       return "Banda listada apenas como observação; sem recomendação.";
   }
 }
+
+export const networkHealthSchema = z.object({
+  data_class: z.literal("HOST_NETWORK_TELEMETRY"),
+  evidence_level: z.literal("L2_LIVE_UNVALIDATED"),
+  mode: z.literal("ADVISORY"),
+  start: z.iso.datetime({ offset: true }),
+  end: z.iso.datetime({ offset: true }),
+  location: locationSchema.nullable(),
+  bucket_minutes: z.number().int().min(15).max(240),
+  buckets: z
+    .array(
+      z.object({
+        start: z.iso.datetime({ offset: true }),
+        end: z.iso.datetime({ offset: true }),
+        summary,
+      }),
+    )
+    .max(96),
+  recent: summary,
+  baseline: summary,
+  alerts: z
+    .array(
+      z.object({
+        code: z.enum([
+          "SIGNAL_DROP",
+          "LATENCY_RISE",
+          "PACKET_LOSS",
+          "FREQUENT_DISCONNECTS",
+          "COLLECTOR_STALE",
+        ]),
+        severity: z.enum(["info", "warning"]),
+        metric: z.string(),
+        recent: z.number().nullable(),
+        baseline: z.number().nullable(),
+        threshold: z.number(),
+        message: z.string(),
+      }),
+    )
+    .max(5),
+  abstentions: z.array(z.string()).max(5),
+});
+export type NetworkHealth = z.infer<typeof networkHealthSchema>;
+type Summary = z.infer<typeof summary>;
+export type LocationGrade = "Bom" | "Regular" | "Fraco" | "Sem dados";
+
+/**
+ * Operator-facing grade of a measured point. Heuristic over Windows signal quality (%)
+ * and gateway probe loss; it ranks points of the same home, it is not a speed test.
+ */
+export function locationGrade(point: Summary): LocationGrade {
+  const signal = point.signal_mean_percent;
+  if (point.samples === 0 || signal == null) return "Sem dados";
+  const loss = point.gateway_loss_percent ?? 0;
+  if (signal >= 70 && loss < 5) return "Bom";
+  if (signal >= 45 && loss < 15) return "Regular";
+  return "Fraco";
+}
+
+const gradeOrder: Record<LocationGrade, number> = {
+  Bom: 0,
+  Regular: 1,
+  Fraco: 2,
+  "Sem dados": 3,
+};
+
+/** Points ordered best first; ungraded points last, ties by signal then name. */
+export function rankLocations<T extends { location: string; summary: Summary }>(
+  points: T[],
+): T[] {
+  return [...points].sort(
+    (a, b) =>
+      gradeOrder[locationGrade(a.summary)] -
+        gradeOrder[locationGrade(b.summary)] ||
+      (b.summary.signal_mean_percent ?? -1) -
+        (a.summary.signal_mean_percent ?? -1) ||
+      a.location.localeCompare(b.location),
+  );
+}
+
+export const webhookStatusSchema = z.object({
+  configured: z.boolean(),
+  destination: z.string().nullable(),
+  interval_seconds: z.number().positive(),
+  active_alerts: z.number().int().nonnegative(),
+  cycles: z.number().int().nonnegative(),
+  last_error: z.string().nullable(),
+  mode: z.literal("ADVISORY"),
+  deliveries: z
+    .array(
+      z.object({
+        id: z.guid(),
+        created_at: z.iso.datetime({ offset: true }),
+        event: z.enum(["alert.raised", "alert.cleared", "webhook.test"]),
+        alert_code: z.string().nullable(),
+        location: z.string().nullable(),
+        delivered: z.boolean(),
+        http_status: z.number().int().nullable(),
+        error: z.string().nullable(),
+      }),
+    )
+    .max(20),
+});
+export type WebhookStatus = z.infer<typeof webhookStatusSchema>;

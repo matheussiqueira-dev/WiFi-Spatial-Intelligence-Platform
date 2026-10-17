@@ -1,30 +1,65 @@
+import asyncio
 import csv
 import io
 from datetime import UTC, datetime, timedelta
+from urllib.parse import urlsplit
 
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import Response
-from sqlalchemy import Engine
 
 from app.adapters.network_store import NetworkStore
 from app.api.deps import require_capability
+from app.application.alert_webhook import AlertWebhook
 from app.application.channel_plan import plan
 from app.application.network_diagnostics import summarize
+from app.application.network_health import health
+from app.config import Settings
 from app.network_contracts import (
     ChannelPlan,
     ChannelSurvey,
     NetworkComparison,
     NetworkConfiguration,
+    NetworkHealth,
     NetworkReport,
     NetworkSample,
 )
 
 
-def network_router(engine: Engine, dependencies: list) -> APIRouter:
+def network_router(
+    store: NetworkStore,
+    dependencies: list,
+    webhook: AlertWebhook | None,
+    settings: Settings,
+) -> APIRouter:
     router = APIRouter(
         prefix="/api/v1/network", tags=["Network diagnostics"], dependencies=dependencies
     )
-    store = NetworkStore(engine)
+    webhook_gate = [require_capability("network.alert_webhook")]
+
+    @router.get("/webhook", dependencies=webhook_gate)
+    def webhook_status():
+        destination = None
+        if settings.alert_webhook_url:
+            # Path and query can carry the receiver's own secret (e.g. a webhook ID).
+            url = urlsplit(settings.alert_webhook_url)
+            destination = f"{url.scheme}://{url.netloc}"
+        return {
+            "configured": webhook is not None,
+            "destination": destination,
+            "interval_seconds": settings.alert_webhook_interval_seconds,
+            "active_alerts": len(webhook.active) if webhook else 0,
+            "cycles": webhook.cycles if webhook else 0,
+            "last_error": webhook.last_error if webhook else None,
+            "deliveries": store.deliveries(),
+            "mode": "ADVISORY",
+        }
+
+    @router.post("/webhook/test", dependencies=webhook_gate)
+    async def webhook_test():
+        if webhook is None:
+            raise HTTPException(409, "alert webhook is not configured")
+        delivered = await asyncio.to_thread(webhook.test)
+        return {"delivered": delivered, "delivery": store.deliveries(1)[0]}
 
     @router.post("/samples")
     def ingest(sample: NetworkSample):
@@ -67,6 +102,37 @@ def network_router(engine: Engine, dependencies: list) -> APIRouter:
         ]
         current = connected[-1].channel if connected else None
         return plan(surveys, current, start, now, location)
+
+    @router.get(
+        "/health",
+        response_model=NetworkHealth,
+        dependencies=[require_capability("network.degradation_alerts")],
+    )
+    def get_health(
+        hours: int = Query(24, ge=2, le=24),
+        bucket_minutes: int = Query(60, ge=15, le=240),
+        location: str | None = Query(None, max_length=48),
+    ):
+        if bucket_minutes not in {15, 30, 60, 120, 240}:
+            raise HTTPException(422, "bucket_minutes must be 15, 30, 60, 120 or 240")
+        now = datetime.now(UTC)
+        start = now - timedelta(hours=hours)
+        try:
+            rows = store.read(start, now)
+        except ValueError as error:
+            raise HTTPException(422, str(error)) from error
+        rows = [row for row in rows if location is None or row.location == location]
+        return health(rows, start, now, timedelta(minutes=bucket_minutes), location)
+
+    @router.delete("/history")
+    def erase_history(
+        confirm: str = Query(..., description="Must be ERASE to confirm the deletion"),
+        location: str | None = Query(None, max_length=48),
+    ):
+        if confirm != "ERASE":
+            raise HTTPException(422, "confirm=ERASE is required")
+        erased = store.erase(location)
+        return {"erased": erased, "location": location, "audit_preserved": True}
 
     @router.get("/config", response_model=NetworkConfiguration)
     def configuration():

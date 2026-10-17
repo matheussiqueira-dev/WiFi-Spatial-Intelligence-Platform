@@ -60,6 +60,28 @@ O nome do ponto é informado manualmente; não existe localização espacial por
 Amostras de pontos diferentes podem refletir horários, carga e condições diferentes.
 A recomendação de canal (seção acima) é apenas sugestão; o roteador nunca é reconfigurado.
 
+## Tendência, alertas e avaliação dos pontos (desde 17/10/2026)
+
+- `GET /api/v1/network/health` traz séries por hora (15–240 min) das últimas 2–24 h e
+  compara a **última hora** com as horas anteriores do mesmo filtro. Alertas
+  consultivos: sinal médio caiu ≥ 15 pontos; latência p95 ≥ 2× a base e ≥ base + 20 ms;
+  sondas sem resposta ≥ 5% (com ≥ 10 enviadas); ≥ 3 desconexões; coletor parado.
+  Sem leituras suficientes (5 de sinal, 10 respostas, 10 sondas), a resposta lista a
+  abstenção em vez de alertar. Nenhuma causa é presumida.
+- A tabela de pontos é ordenada do melhor para o pior com a avaliação Bom (sinal ≥ 70%
+  e perda < 5%), Regular (≥ 45% e < 15%), Fraco ou Sem dados. Heurística para comparar
+  cômodos da mesma casa, não teste de velocidade.
+- Webhook local (opcional): com `SPATIAL_ALERT_WEBHOOK_URL` (IP literal de loopback ou
+  rede privada, sem DNS) e `SPATIAL_ALERT_WEBHOOK_SECRET` (≥ 32 caracteres), a API
+  avalia os alertas por ponto a cada `SPATIAL_ALERT_WEBHOOK_INTERVAL_SECONDS` e envia
+  `alert.raised`/`alert.cleared` por POST. O receptor confere
+  `X-Spatial-Signature: sha256=HMAC(secret, "<X-Spatial-Timestamp>.<corpo>")` e deve
+  recusar timestamps antigos. Sem redirect e sem proxy; falhas são registradas (até 1.000
+  entregas, sem corpo) e repetidas no ciclo seguinte. O estado ativo fica em memória:
+  após reinício, alertas ainda ativos são reenviados (entrega pelo menos uma vez).
+- `DELETE /api/v1/network/history?confirm=ERASE[&location=…]` apaga medições e
+  varreduras (de um ponto ou todas); a auditoria guarda só o fato. Exporte antes.
+
 ## Interpretação e limites
 
 - Sinal é qualidade percentual fornecida pelo Windows, não RSSI medido em dBm.
