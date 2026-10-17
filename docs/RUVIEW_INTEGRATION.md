@@ -104,8 +104,12 @@ Depois de bootstrap, com Docker Desktop Linux ativo:
 
 ```powershell
 .\scripts\dev\start-ruview.ps1
+$env:SPATIAL_LEGACY_LAB_ENABLED = 'true'   # opt-in explícito, só nesta sessão
 .\scripts\dev\start.ps1
 ```
+
+Sem a flag, `/sources/select` com `RUVIEW_STREAM` responde 409 e a opção
+"Laboratório legado" fica desabilitada no dashboard.
 
 O primeiro comando gera `.env.ruview` **somente se ausente**, com token aleatório.
 A API lê `.env` e `.env.ruview` (segundo prevalece; variáveis de processo têm

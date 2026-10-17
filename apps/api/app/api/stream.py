@@ -6,6 +6,8 @@ import hmac
 from fastapi import APIRouter, WebSocket
 from starlette.websockets import WebSocketDisconnect
 
+from app.capabilities import is_enabled
+
 router = APIRouter()
 
 
@@ -14,6 +16,9 @@ async def stream(ws: WebSocket):
     c = ws.app.state.container
     settings, store, pipeline, limiter = c.settings, c.store, c.pipeline, c.limiter
     handshakes = c.stream_handshakes
+    if not is_enabled("spatial.presence", settings.capability_profile):
+        await ws.close(code=1008, reason="capability spatial.presence disabled by profile")
+        return
     if ws.headers.get("origin") not in settings.origins:
         await asyncio.to_thread(store.security_denial, "ws.origin_denied")
         await ws.close(code=1008)
@@ -29,7 +34,7 @@ async def stream(ws: WebSocket):
         await asyncio.to_thread(store.security_denial, "ws.rate_denied")
         await ws.close(code=1013)
         return
-    queue = asyncio.Queue(maxsize=16)
+    queue: asyncio.Queue[dict] = asyncio.Queue(maxsize=16)
     handshake = object()
     handshakes.add(handshake)
     receiver = None

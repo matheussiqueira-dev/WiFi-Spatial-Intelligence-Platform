@@ -7,10 +7,10 @@ from collections import deque
 from datetime import UTC, datetime
 from urllib.error import HTTPError
 from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_opener
-from uuid import NAMESPACE_URL, uuid5
+from uuid import NAMESPACE_URL, UUID, uuid5
 
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt, ValidationError
-from websockets.asyncio.client import connect
+from websockets.asyncio.client import ClientConnection, connect
 from websockets.exceptions import WebSocketException
 
 from app.config import Settings
@@ -72,7 +72,7 @@ class RuViewProvider:
         self.tick = 0
         self.connected = False
         self.active = False
-        self.socket = None
+        self.socket: ClientConnection | None = None
         self.retry_at = 0.0
         self.failures = 0
         self.received = 0
@@ -80,12 +80,12 @@ class RuViewProvider:
         self.ignored = 0
         self.duplicates = 0
         self.reconnections = 0
-        self.last_received = None
-        self.last_timestamp = None
-        self.last_tick = None
+        self.last_received = 0.0
+        self.last_timestamp: datetime | None = None
+        self.last_tick: int | None = None
         self.service_status = "stopped"
-        self.last_error = None
-        self.seen = deque(maxlen=256)
+        self.last_error: str | None = None
+        self.seen: deque[UUID] = deque(maxlen=256)
 
     async def connect(self):
         self.active = True
@@ -135,7 +135,8 @@ class RuViewProvider:
         if not self.active or time.monotonic() < self.retry_at:
             return None
         try:
-            if self.socket is None:
+            socket = self.socket
+            if socket is None:
                 await asyncio.to_thread(self._probe)
                 if not self.active:
                     return None
@@ -160,7 +161,7 @@ class RuViewProvider:
                 self.service_status = "waiting"
                 self.reconnections += 1
             try:
-                raw = await asyncio.wait_for(self.socket.recv(), timeout=0.5)
+                raw = await asyncio.wait_for(socket.recv(), timeout=0.5)
             except TimeoutError:
                 if time.monotonic() - self.last_received > self.settings.ruview_stale_seconds:
                     await self._fail("RuView stream stale; reconnecting.")
@@ -177,8 +178,13 @@ class RuViewProvider:
             if event.event_id in self.seen:
                 self.duplicates += 1
                 return None
-            if self.last_tick is not None and (
-                event.provenance.tick <= self.last_tick or event.timestamp <= self.last_timestamp
+            if (
+                self.last_tick is not None
+                and self.last_timestamp is not None
+                and (
+                    event.provenance.tick <= self.last_tick
+                    or event.timestamp <= self.last_timestamp
+                )
             ):
                 raise ValueError("out-of-order upstream frame")
             self.seen.append(event.event_id)

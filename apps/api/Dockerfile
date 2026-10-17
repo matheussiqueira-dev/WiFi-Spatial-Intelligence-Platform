@@ -1,4 +1,5 @@
-FROM python:3.12-slim
+# Multi-arch index digest (16/10/2026); Dependabot proposes refreshes.
+FROM python:3.12-slim@sha256:a6e34c598f2467ed0e9a8d349809fcd8b5c603269512df273a0bb1784edc11b1
 WORKDIR /workspace
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 COPY apps/api/requirements.runtime.txt /workspace/requirements.txt

@@ -2,8 +2,8 @@
 
 from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import create_engine, event
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine, event, func, select
+from sqlalchemy.orm import Session, sessionmaker
 
 
 def epoch_microseconds(timestamp: str) -> int:
@@ -24,3 +24,8 @@ class Database:
             connection.execute("PRAGMA busy_timeout=15000")
 
         self.session = sessionmaker(self.engine)
+
+
+def row_count(session: Session, source) -> int:
+    """count(*) is never NULL; this gives the ORM scalar a precise type."""
+    return session.scalar(select(func.count()).select_from(source)) or 0

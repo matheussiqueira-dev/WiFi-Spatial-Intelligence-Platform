@@ -1,10 +1,11 @@
 import threading
 from datetime import datetime
 
-from sqlalchemy import Engine, String, Text, func, select
+from sqlalchemy import Engine, String, Text, select
 from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.orm import Mapped, mapped_column, sessionmaker
 
+from app.adapters.sqlite.database import row_count
 from app.network_contracts import ChannelSurvey, NetworkSample
 from app.storage import Base
 
@@ -45,7 +46,7 @@ class NetworkStore:
                 if existing.payload != sample.model_dump_json():
                     raise ValueError("sample ID already belongs to another payload")
                 return False
-            if session.scalar(select(func.count()).select_from(NetworkSampleRow)) >= self.capacity:
+            if row_count(session, NetworkSampleRow) >= self.capacity:
                 raise ValueError(
                     "network history capacity reached; export/archive before continuing"
                 )
@@ -111,7 +112,7 @@ class NetworkStore:
                 if existing.payload != survey.model_dump_json():
                     raise ValueError("survey ID already belongs to another payload")
                 return False
-            count = session.scalar(select(func.count()).select_from(ChannelSurveyRow))
+            count = row_count(session, ChannelSurveyRow)
             if count >= self.survey_capacity:
                 raise ValueError("channel survey capacity reached; export/archive first")
             session.add(

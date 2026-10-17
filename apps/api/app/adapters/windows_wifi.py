@@ -9,6 +9,7 @@ import subprocess
 import sys
 import unicodedata
 from base64 import b64encode
+from typing import Any
 
 
 def normalized(value: str) -> str:
@@ -25,7 +26,7 @@ def unavailable(code: str) -> dict:
 
 def parse_interfaces(text: str) -> dict:
     blocks = re.split(r"(?im)^\s*(?:name|nome)\s*:", text)
-    readings = []
+    readings: list[dict[str, Any]] = []
     for block in blocks:
         values = {
             normalized(key): value.strip()

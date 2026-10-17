@@ -27,11 +27,11 @@ class ExperimentJobs:
         self.lab = lab
         self.store = lab.store
         self.lock = lock
-        self.queue = asyncio.Queue(maxsize=2)
+        self.queue: asyncio.Queue[tuple[str, ExperimentRequest]] = asyncio.Queue(maxsize=2)
         self.cancelled = {}
-        self.task = None
+        self.task: asyncio.Task | None = None
         self.closed = False
-        self.last_error = None
+        self.last_error: str | None = None
         # Serializes capacity checks with persistence so awaited I/O cannot oversubscribe.
         self.admission = asyncio.Lock()
 
@@ -52,7 +52,12 @@ class ExperimentJobs:
 
     async def submit(self, request: ExperimentRequest):
         async with self.admission:
-            if not self.accepting() or await asyncio.to_thread(self.store.job_count) >= 100:
+            # Refuse up front when run history is full; the job would only fail later.
+            if (
+                not self.accepting()
+                or await asyncio.to_thread(self.store.job_count) >= 100
+                or await asyncio.to_thread(self.store.model_run_count) >= 100
+            ):
                 raise ValueError("experiment queue or history capacity reached")
             identifier = str(uuid4())
             job = queued(identifier, request)

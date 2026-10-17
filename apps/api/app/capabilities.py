@@ -130,6 +130,19 @@ CATALOG: tuple[Capability, ...] = (
         note="Treino e avaliação em dataset sintético; não é acurácia real.",
     ),
     Capability(
+        id="automation.dry_run_rules",
+        name="Regras locais de automação em dry-run",
+        group="B",
+        status="IMPLEMENTED_SYNTHETIC",
+        evidence_ceiling="L0_SYNTHETIC",
+        regulatory=["LGPD_PERSONAL"],
+        requires_hardware=True,
+        requires_consent=True,
+        profiles=["lab"],
+        endpoint="/api/v1/automation/rules",
+        note="Decisões sobre eventos de presença/ocupação; nenhuma ação é despachada.",
+    ),
+    Capability(
         id="spatial.rf_fingerprint",
         name="Impressão RF e anomalia do ambiente",
         group="B",
@@ -227,6 +240,10 @@ def catalog(profile: Profile) -> CapabilityCatalog:
             for item in CATALOG
         ],
     )
+
+
+def declared(capability_id: str) -> bool:
+    return any(item.id == capability_id for item in CATALOG)
 
 
 def is_enabled(capability_id: str, profile: Profile) -> bool:

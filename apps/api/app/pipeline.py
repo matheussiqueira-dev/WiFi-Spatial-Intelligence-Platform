@@ -3,11 +3,13 @@ import logging
 import time
 from collections import deque
 from contextlib import asynccontextmanager
+from typing import Any, cast
 from uuid import uuid4
 
 from app.adapters.providers import build_provider
 from app.config import Settings
 from app.contracts import SimulationConfig
+from app.ports.source import StreamingSource
 from app.storage import Store
 
 logger = logging.getLogger("spatial.pipeline")
@@ -20,19 +22,21 @@ class Pipeline:
         self.source = "synthetic-native"
         self.provider = build_provider(self.source, SimulationConfig(), settings)
         self.state = "stopped"
-        self.queue = asyncio.Queue(maxsize=64)
+        # (session generation, segment id, enqueue perf_counter, event)
+        self.queue: asyncio.Queue[tuple[int, str, float, Any]] = asyncio.Queue(maxsize=64)
         self.subscribers: set[asyncio.Queue] = set()
-        self.latest = None
+        self.latest: dict | None = None
         self.produced = 0
         self.dropped = 0
         self.delivery_attempts = 0
-        self.error = None
-        self.tasks = []
+        self.error: str | None = None
+        self.tasks: list[asyncio.Task] = []
         self.control_lock = asyncio.Lock()
         self.session_generation = 0
         # Items queued before this generation belong to a failed session and are dropped.
         self.discard_before = 0
-        self.measurements = deque(maxlen=2000)
+        # (monotonic time, processing latency ms)
+        self.measurements: deque[tuple[float, float | None]] = deque(maxlen=2000)
         self.telemetry_started = time.monotonic()
 
     async def select_source(self, source: str):
@@ -90,8 +94,11 @@ class Pipeline:
             self.dropped = 0
             self.delivery_attempts = 0
         elif action == "pause" and self.state == "running":
-            self.state = "paused"
+            # The new generation already stops enqueueing; report "paused" only once the
+            # queued events are persisted, so observers never see writes after "paused".
             self.session_generation += 1
+            await self.queue.join()
+            self.state = "paused"
         elif action == "resume" and self.state == "paused":
             self.session_generation += 1
             self.state = "running"
@@ -174,8 +181,8 @@ class Pipeline:
                 event.processing_latency_ms = (time.perf_counter() - started) * 1000
                 persisted = await asyncio.to_thread(self.store.write, event, segment_id)
                 if persisted is False:
-                    if self.provider.streaming:
-                        self.provider.duplicates += 1
+                    if (stream := self._stream()) is not None:
+                        stream.duplicates += 1
                     continue
                 self.latest = event.model_dump(mode="json")
                 self.produced += 1
@@ -196,12 +203,17 @@ class Pipeline:
             finally:
                 self.queue.task_done()
 
+    def _stream(self) -> StreamingSource | None:
+        # The `streaming` flag is the provider's declared shape (see app/ports/source.py).
+        return cast(StreamingSource, self.provider) if self.provider.streaming else None
+
     def status(self):
         # tuple() copies the deque atomically; routes may call this from the threadpool.
         samples = tuple(self.measurements)
         latest = self.latest
         recent = [item for item in samples if item[0] >= time.monotonic() - 60]
-        latencies = sorted(item[1] for item in recent)
+        latencies = sorted(item[1] for item in recent if item[1] is not None)
+        stream = self._stream()
         window = min(60, max(0.001, time.monotonic() - self.telemetry_started))
         return {
             "metrics": {
@@ -213,9 +225,7 @@ class Pipeline:
                 if self.delivery_attempts
                 else None,
                 "last_seen": latest["timestamp"] if latest else None,
-                "reconnections": self.provider.diagnostics()["reconnections"]
-                if self.provider.streaming
-                else 0,
+                "reconnections": stream.diagnostics()["reconnections"] if stream else 0,
                 "queue_wait_p50_ms": latencies[int((len(latencies) - 1) * 0.5)]
                 if latencies
                 else None,
@@ -236,5 +246,5 @@ class Pipeline:
             "error": self.error,
             "config": self.provider.config.model_dump(),
             "connected": self.provider.connected,
-            "source_diagnostics": self.provider.diagnostics() if self.provider.streaming else None,
+            "source_diagnostics": stream.diagnostics() if stream else None,
         }

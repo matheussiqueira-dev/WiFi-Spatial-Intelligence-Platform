@@ -74,7 +74,13 @@ test("local MVP: auth, live stream, controls, history, mobile and deletion", asy
         ).total,
     )
     .toBeGreaterThanOrEqual(24);
+  const pauseResponse = page.waitForResponse(
+    (response) =>
+      response.url().endsWith("/simulation/pause") &&
+      response.request().method() === "POST",
+  );
   await page.getByRole("button", { name: "Pausar", exact: true }).click();
+  expect((await pauseResponse).ok()).toBe(true);
   await expect(page.locator(".state")).toHaveText("Pausada");
   const paused = (
     await (await request.get(`${apiBase}/events`, { headers: auth })).json()

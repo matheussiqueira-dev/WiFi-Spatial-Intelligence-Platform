@@ -4,11 +4,11 @@ import asyncio
 
 from fastapi import APIRouter, HTTPException, Query
 
-from app.api.deps import ContainerDep, protected
+from app.api.deps import ContainerDep, ProtectiveDenial, gated
 from app.application.model_lab import ExperimentRequest
 from app.lab_contracts import ExperimentResult
 
-router = APIRouter(dependencies=protected)
+router = APIRouter(dependencies=gated("spatial.activity_baseline"))
 
 
 @router.post("/api/v1/model-lab/jobs")
@@ -16,7 +16,7 @@ async def submit_experiment(query: ExperimentRequest, c: ContainerDep):
     try:
         return await c.experiment_jobs.submit(query)
     except ValueError as error:
-        raise HTTPException(409, str(error)) from error
+        raise ProtectiveDenial(str(error)) from error
 
 
 @router.get("/api/v1/model-lab/jobs/{identifier}")
@@ -39,7 +39,7 @@ def cancel_job(identifier: str, c: ContainerDep):
 @router.post("/api/v1/model-lab/runs", response_model=ExperimentResult)
 async def run_experiment(query: ExperimentRequest, c: ContainerDep):
     if c.model_lock.locked():
-        raise HTTPException(409, "one experiment at a time")
+        raise ProtectiveDenial("one experiment at a time")
     async with c.model_lock:
         try:
             return await asyncio.to_thread(c.model_lab.execute, query)

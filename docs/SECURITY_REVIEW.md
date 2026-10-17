@@ -1,5 +1,14 @@
 # Revisão de segurança, privacidade e qualidade
 
+## Adendo — 16/10/2026
+
+Perfil de capacidades aplicado no backend (403 após autenticação; WS 1008). Páginas
+`/docs`/`/redoc`, que carregam scripts de CDN sem SRI, desligadas por padrão. Allowlist
+de Host configurável sem `testserver` em produção. Host `ruview` aceito só com
+`SPATIAL_CONTAINER_NETWORK=true`. Negativas `operation.denied` restritas a recusas
+protetivas, reduzindo ruído na auditoria. Continua sem aprovação para exposição fora de
+loopback.
+
 ## Adendo — 15/10/2026, 21:03 Fortaleza
 
 Corrigidos: corpo HTTP parseado antes da autenticação sem limite (BodyLimit 64 KiB,

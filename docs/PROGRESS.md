@@ -1,5 +1,65 @@
 # Progresso da plataforma
 
+## Claude Code: pendências do PR #6 concluídas — 16/10/2026
+
+- **Imagens por digest:** `python:3.12-slim`, `node:22-slim` e o `Dockerfile.verify`
+  (3.12 padrão, 3.13 por argumento) fixados pelo digest do índice multi-arquitetura;
+  Dependabot ganha o ecossistema `docker`.
+- **Histórico de regras (contracts-data-13):** migração 0009 com `created_at`/`revoked_at`
+  e `audit_events.subject_id`; API e contrato Zod expõem os horários, o painel mostra
+  "criada … · revogada …" ou "criação anterior ao histórico" (NULL não é inventado).
+- **Tipagem:** mypy 2.4.0 (dev; lock regenerado só com adições) no `check.ps1`, no
+  `linux_checks.py` e no CI; 62 erros corrigidos (anotações, `row_count`, estreitamento de
+  `utcoffset`, porta `StreamingSource` no pipeline, tipo `Advice` compartilhado).
+- **E2E:** WebKit voltou a executar no Windows e entrou no gate/CI; bug real corrigido
+  (token digitado antes da hidratação não chegava ao estado React → 401). Novo spec do
+  perfil `commercial-br` via `E2E_PROFILE`.
+- Demo Docker reconstruída com imagens fixadas: Alembic 0009, 10.000 eventos preservados
+  (cópia do volume antes da migração, fora do repositório).
+
+Comandos: `pytest`, `mypy`, `ruff`, `npm.cmd run build:e2e`, `E2E_BROWSERS=chromium,webkit`
+e `E2E_PROFILE=commercial-br npm.cmd run test:e2e`, `docker compose up --build --detach
+--wait`, `Dockerfile.verify` 3.13 e `check.ps1` (resultados em VERIFICATION_REPORT).
+Pendente: NVDA (leitor de tela não instalado, validação manual); Firefox fora do gate.
+
+## Claude Code: perfil de capacidades aplicado e P3 da auditoria — 16/10/2026
+
+PR #1 mesclado na `main` (`be66f40`). Trabalho em `feat/capability-enforcement`.
+
+- **Perfil como bloqueio real:** `require_capability` (após a autenticação, 401 antes
+  de 403) nos routers de presença/simulação/eventos/sensores/ocupação, analytics,
+  laboratório de modelos, automação e rede (grupo A); stream fecha 1008 quando o perfil
+  desliga presença. Nova capacidade declarada `automation.dry_run_rules`. `/system/status`,
+  catálogo e governança seguem abertos. Dashboard carrega o catálogo no login, não abre
+  WS nem sincroniza eventos fora do perfil e mostra aviso no lugar dos módulos grupo B.
+- **P3:** `/docs`/`/redoc` (scripts de CDN) só com `SPATIAL_API_DOCS_ENABLED=true`;
+  `SPATIAL_ALLOWED_HOSTS` substitui lista fixa com `testserver`; host `ruview` só com
+  `SPATIAL_CONTAINER_NETWORK=true` (Compose); downgrades 0001/0002 recusam; fila de jobs
+  recusa (409) com histórico de runs cheio; `operation.denied` só para recusas protetivas
+  (`ProtectiveDenial`); portas `SampledSource`/`StreamingSource` com conformidade.
+- **Docs:** `.env.example` completo, README (perfil, WS, `/docs` opcional, guias antes
+  órfãos), roteiro RuView com opt-in, nota histórica no relatório v3, nome corrigido em
+  README_IMPORTANTE. `.gitattributes` (`eol=lf`) evita CRLF em checkouts Windows, que
+  quebravam o gate do Prettier.
+- Testes novos: enforcement por perfil (27), config (4), políticas (4), conformidade (1),
+  helper web (1).
+
+Gate `check.ps1` exit 0: Ruff/format, 20 contratos, 253 backend, 6 launchers, Prettier,
+33 web, ESLint, tsc, build e 9 E2E Chromium (34,1 s), 1 skipped. Perfil `commercial-br`
+coberto por testes de API; não houve E2E de navegador nesse perfil.
+Correção do E2E do PR #6 (`eb4e28a`): `pause` só reporta `paused` depois de
+`queue.join()` (antes o estado mudava com eventos ainda na fila, total 30→32); specs E2E
+aguardam o POST de pausa e o de recuperação para a sessão antes de começar. Teste de
+regressão `test_paused_state_is_reported_only_after_the_queue_is_drained`. Gate exit 0
+(254 backend, 9 E2E).
+
+Demo Docker reconstruída (`docker compose up --build --detach --wait`, sem `down -v`):
+volume `wifi-spatial_spatial-data` preservado (cópia prévia fora do repositório), Alembic
+em `0008`, 10.000 eventos mantidos, api/web healthy; health, status, catálogo (perfil
+`lab`, 7 capacidades ativas), eventos, sensores e rede 200 com token; `/docs` 404.
+Pendente: fixar imagens por digest; histórico de regras (migração); tipagem Python;
+NVDA/WebKit; E2E de navegador no perfil `commercial-br`.
+
 ## Claude Code: modularização do backend — 15/10/2026, 23:44–00:10
 
 Feita após confirmação de que a sessão Codex estava parada (sem edições havia 10 min);

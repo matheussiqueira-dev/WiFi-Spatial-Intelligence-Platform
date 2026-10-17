@@ -16,6 +16,12 @@ class Settings(BaseSettings):
     database_url: str = "sqlite:///./runtime/spatial.db"
     retention_events: int = Field(default=10000, ge=100, le=100000)
     origins: list[str] = ["http://127.0.0.1:3000", "http://localhost:3000"]
+    # Host header allowlist; tests add "testserver" explicitly instead of shipping it.
+    allowed_hosts: list[str] = ["127.0.0.1", "localhost", "api"]
+    # Swagger/ReDoc pages load third-party CDN scripts; off unless explicitly enabled.
+    api_docs_enabled: bool = False
+    # Only Compose sets this: the "ruview" service name resolves on its private network.
+    container_network: bool = False
     ruview_http_url: str = "http://127.0.0.1:4860"
     ruview_ws_url: str = "ws://127.0.0.1:4861/ws/sensing"
     ruview_token: str = Field(default="", max_length=512, repr=False)
@@ -36,10 +42,13 @@ class Settings(BaseSettings):
     def local_ruview_only(cls, value: str, info):
         url = urlsplit(value)
         scheme = "http" if info.field_name == "ruview_http_url" else "ws"
+        hosts = {"127.0.0.1", "localhost", "::1"}
+        if info.data.get("container_network"):
+            hosts.add("ruview")
         # Deliberately no arbitrary URL supplied through the dashboard (SSRF).
         if (
             url.scheme != scheme
-            or url.hostname not in {"127.0.0.1", "localhost", "::1", "ruview"}
+            or url.hostname not in hosts
             or url.username is not None
             or url.password is not None
             or url.query

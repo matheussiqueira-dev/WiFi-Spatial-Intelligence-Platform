@@ -3,7 +3,12 @@
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { request } from "../lib/api";
-import { ruleSchema, rulesSchema, decisionsSchema } from "../lib/automation";
+import {
+  ruleSchema,
+  rulesSchema,
+  decisionsSchema,
+  ruleTimeline,
+} from "../lib/automation";
 
 function fetchAutomation(token: string, offset: number) {
   return Promise.all([
@@ -128,7 +133,8 @@ export default function AutomationPanel({ token }: { token: string }) {
       <ul>
         {rules?.items.map((rule) => (
           <li key={rule.id} data-rule-id={rule.id}>
-            {rule.name} · {rule.active ? "Ativa" : "Revogada"} · DRY_RUN{" "}
+            {rule.name} · {rule.active ? "Ativa" : "Revogada"} · DRY_RUN ·{" "}
+            <small>{ruleTimeline(rule)}</small>{" "}
             <button
               className="secondary"
               disabled={busy || !rule.active}

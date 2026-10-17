@@ -1,5 +1,10 @@
 # Relatório técnico do marco v3.0
 
+> **Snapshot histórico (15/10/2026, tarde).** Fases e contagens abaixo refletem aquele
+> marco; F3B/F4/F5/F6 avançaram depois. Estado vigente: docs/PROGRESS.md,
+> docs/VERIFICATION_REPORT.md e docs/DECISIONS.md (ADR-010/011). docs/docs/ é cópia
+> idêntica do plano, não normativa.
+
 15/10/2026, America/Fortaleza. Fonte normativa única: PROJECT_MASTER_PLAN.md,
 29.666 bytes, cabeçalho v3.0, seção 4 Clean Room Design e fases F0R/F1R/F2R
 confirmadas por leitura integral. SHA-256:

@@ -1,5 +1,9 @@
+# Pinned by multi-arch index digest (16/10/2026). For 3.13 pass both args:
+#   --build-arg PYTHON_VERSION=3.13
+#   --build-arg PYTHON_DIGEST=sha256:70729b46c69b4f1e97c4822c1af3df53a1476cf5ddc6c087c0c10bc3a5678c2f
 ARG PYTHON_VERSION=3.12
-FROM python:${PYTHON_VERSION}-slim
+ARG PYTHON_DIGEST=sha256:a6e34c598f2467ed0e9a8d349809fcd8b5c603269512df273a0bb1784edc11b1
+FROM python:${PYTHON_VERSION}-slim@${PYTHON_DIGEST}
 WORKDIR /workspace
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 COPY apps/api/requirements.lock.txt /workspace/requirements.txt

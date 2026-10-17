@@ -6,11 +6,11 @@ from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import Response
 
 from app.analytics import AnalyticsQuery, aggregate, csv_report, replay_page
-from app.api.deps import ContainerDep, protected
+from app.api.deps import ContainerDep, gated
 from app.bootstrap import Container
 from app.ports.history import HistorySelection
 
-router = APIRouter(dependencies=protected)
+router = APIRouter(dependencies=gated("spatial.occupancy_analytics"))
 
 
 def selection(query: AnalyticsQuery) -> HistorySelection:

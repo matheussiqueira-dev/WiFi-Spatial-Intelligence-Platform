@@ -7,7 +7,6 @@ from pydantic import ValidationError
 from app.adapters.windows_wifi import parse_networks
 from app.application.channel_plan import aggregate, plan
 from app.capabilities import CATALOG, catalog, is_enabled
-from app.config import Settings
 from app.network_contracts import ChannelSurvey
 
 PT = """Nome da interface: Wi-Fi
@@ -215,11 +214,11 @@ def test_capabilities_endpoint_follows_configured_profile(settings, tmp_path):
     from app.main import create_app
     from tests.conftest import TOKEN
 
-    commercial = Settings(
-        token=TOKEN,
-        database_url=f"sqlite:///{tmp_path / 'commercial.db'}",
-        capability_profile="commercial-br",
-        _env_file=None,
+    commercial = settings.model_copy(
+        update={
+            "database_url": f"sqlite:///{tmp_path / 'commercial.db'}",
+            "capability_profile": "commercial-br",
+        }
     )
     for config, profile in ((settings, "lab"), (commercial, "commercial-br")):
         with TestClient(create_app(config)) as client:

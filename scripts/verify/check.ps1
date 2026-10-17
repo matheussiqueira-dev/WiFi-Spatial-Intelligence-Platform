@@ -1,4 +1,4 @@
-param([switch]$SkipE2E, [switch]$RuView, [int]$RuViewHttpPort = 4860, [int]$RuViewWsPort = 4861)
+param([switch]$SkipE2E, [switch]$RuView, [int]$RuViewHttpPort = 4860, [int]$RuViewWsPort = 4861, [string]$Browsers = 'chromium,webkit')
 $ErrorActionPreference = 'Stop'
 Set-Location (Join-Path $PSScriptRoot '../..')
 . (Join-Path $PSScriptRoot '../common.ps1')
@@ -8,6 +8,8 @@ $pythonPath = Join-Path (Get-Location) 'apps/api/.venv/Scripts/python.exe'
 Assert-Exit 'Python lint'
 & $pythonPath -m ruff format --check apps/api scripts/verify scripts/network
 Assert-Exit 'Python format'
+& $pythonPath -m mypy --config-file apps/api/pyproject.toml apps/api/app
+Assert-Exit 'Python types'
 & $pythonPath scripts/verify/export_contract.py --check
 Assert-Exit 'Published contracts'
 & $pythonPath -m pytest apps/api/tests -q
@@ -31,6 +33,8 @@ if (-not $SkipE2E) {
     $previousRuViewToken = $env:SPATIAL_RUVIEW_TOKEN
     $previousRuViewHttp = $env:E2E_RUVIEW_HTTP_URL
     $previousRuViewWs = $env:E2E_RUVIEW_WS_URL
+    $previousBrowsers = $env:E2E_BROWSERS
+    $previousProfile = $env:E2E_PROFILE
     $ruviewStarted = $false
     try {
         if ($RuView) {
@@ -42,14 +46,23 @@ if (-not $SkipE2E) {
             $env:E2E_RUVIEW_HTTP_URL = "http://127.0.0.1:$RuViewHttpPort"
             $env:E2E_RUVIEW_WS_URL = "ws://127.0.0.1:$RuViewWsPort/ws/sensing"
         } else { $env:E2E_RUVIEW = '0' }
+        $env:E2E_BROWSERS = $Browsers
+        $env:E2E_PROFILE = 'lab'
         npm.cmd run test:e2e
         Assert-Exit 'End-to-end tests'
+        # Same build, API restarted with the commercial-br capability profile.
+        $env:E2E_BROWSERS = 'chromium'
+        $env:E2E_PROFILE = 'commercial-br'
+        npm.cmd run test:e2e
+        Assert-Exit 'End-to-end tests (commercial-br profile)'
     } finally {
         # Restore first so a failing shutdown neither leaks the credential nor masks errors.
         $env:E2E_RUVIEW = $previousRuViewFlag
         $env:SPATIAL_RUVIEW_TOKEN = $previousRuViewToken
         $env:E2E_RUVIEW_HTTP_URL = $previousRuViewHttp
         $env:E2E_RUVIEW_WS_URL = $previousRuViewWs
+        $env:E2E_BROWSERS = $previousBrowsers
+        $env:E2E_PROFILE = $previousProfile
         if ($ruviewStarted) {
             docker compose --env-file artifacts/ruview-verification.env -f compose.ruview.yaml -p wifi-spatial-f2-verification down
             if ($LASTEXITCODE -ne 0) { Write-Warning "Verification RuView shutdown failed (exit $LASTEXITCODE)." }

@@ -17,8 +17,16 @@ const webPort = external ? Number(process.env.E2E_WEB_PORT) : 4310;
 if (!Number.isInteger(webPort) || webPort <= 0 || webPort === 3000)
   throw new Error("External E2E requires E2E_WEB_PORT of an isolated stack.");
 const apiPort = 4810;
+// Capability profile of the API under test; commercial-br runs its own spec only.
+const profile = process.env.E2E_PROFILE ?? "lab";
+if (!["lab", "commercial-br"].includes(profile))
+  throw new Error(`Unsupported E2E_PROFILE: ${profile}`);
+const commercialSpec = /commercial-profile\.spec\.ts$/;
 export default defineConfig({
   testDir: "./e2e",
+  ...(profile === "commercial-br"
+    ? { testMatch: commercialSpec }
+    : { testIgnore: commercialSpec }),
   fullyParallel: false,
   workers: 1,
   timeout: 45000,
@@ -48,6 +56,7 @@ export default defineConfig({
           reuseExistingServer: false,
           env: {
             SPATIAL_TOKEN: token,
+            SPATIAL_CAPABILITY_PROFILE: profile,
             SPATIAL_DATABASE_URL: `sqlite:///${database}`,
             SPATIAL_ORIGINS: JSON.stringify([`http://127.0.0.1:${webPort}`]),
             SPATIAL_RUVIEW_HTTP_URL:

@@ -1,5 +1,29 @@
 # Relatório de verificação
 
+## Pendências finais do PR #6 (Claude Code) — 16/10/2026
+
+| Comando / inspeção | Resultado |
+| --- | --- |
+| E2E CI do PR #6 (pausa) | Red: total 30→32 após pausar; corrigido (`queue.join()` antes de `paused`), CI 10/10 |
+| Demo Docker (volume preservado, cópia prévia) | 0008 e depois 0009 aplicadas; 10.000 eventos mantidos; api/web healthy; imagens por digest |
+| `test_rule_history.py` | 2 pass (ciclo com horários/auditoria; migração mantém NULL em regras antigas) |
+| mypy baseline → final | 62 erros em 17 arquivos → 0 em 51 arquivos |
+| Linux `Dockerfile.verify` 3.13 (digest) | Ruff, format, mypy, 256 backend, 6 launchers, pip-audit dos dois locks sem vulnerabilidades |
+| WebKit no Windows | antes BLOCKED (DLL); agora executa. Red: `avatars` 401 com token digitado antes da hidratação; corrigido lendo o campo no submit |
+| E2E Chromium + WebKit (lab) | 18 pass, 2 skip (RuView) |
+| E2E `commercial-br` (Chromium) | 1 pass: 403 em eventos/sensores/replay/regras, nenhum WebSocket ou chamada espacial, axe sem violações |
+| NVDA | BLOCKED: leitor de tela não instalado; exige validação manual assistiva |
+| `check.ps1` final | exit 0: Ruff/format, mypy (51), 20 contratos, 256 backend, 6 launchers, Prettier, 35 web, ESLint, tsc, build, 18 E2E Chromium+WebKit (1,7 min, 2 skip RuView), 1 E2E commercial-br |
+
+## Perfil aplicado e P3 (Claude Code) — 16/10/2026
+
+| Comando / inspeção | Resultado |
+| --- | --- |
+| Red `test_capability_enforcement.py` | 11 falhas antes do enforcement (endpoints 200 em commercial-br, stream aberto, capacidade não declarada) |
+| `pytest apps/api/tests` | 253 pass |
+| `check.ps1` | exit 0: Ruff/format, 20 contratos, 253 backend, 6 launchers, Prettier, 33 web, ESLint, tsc, build, 9 E2E (34,1 s), 1 skip |
+| Docker Desktop | não iniciou (engine ausente); demo e Docker E2E não reexecutados |
+
 ## Auditoria P2/P3 e CI gratuito (Claude Code) — 15/10/2026, 22:15–22:58 Fortaleza
 
 | Comando / inspeção | Resultado |

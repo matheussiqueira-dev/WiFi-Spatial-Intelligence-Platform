@@ -5,7 +5,7 @@ from datetime import UTC, timedelta
 
 from sqlalchemy import delete, func, select
 
-from app.adapters.sqlite.database import Database, epoch_microseconds
+from app.adapters.sqlite.database import Database, epoch_microseconds, row_count
 from app.adapters.sqlite.models import AnalyticsReportRow, EventRow, audit_row
 from app.adapters.sqlite.rules import record_decisions
 from app.contracts import Event
@@ -18,9 +18,9 @@ class EventRepository:
     def __init__(self, database: Database, retention: int):
         self.session = database.session
         self.retention = retention
-        self.segment_id = None
+        self.segment_id: str | None = None
         # Lexical timestamp ranges are only valid while every stored value is UTC isoformat.
-        self.utc_timestamps = None
+        self.utc_timestamps: bool | None = None
 
     def write(self, event: Event, segment_id=CURRENT_SEGMENT):
         # The pipeline passes the segment captured at enqueue time; it may have changed since.
@@ -43,7 +43,7 @@ class EventRepository:
             )
             session.flush()
             # count(*) uses a covering index; an OFFSET boundary walked `retention` entries.
-            excess = session.scalar(select(func.count()).select_from(EventRow)) - self.retention
+            excess = row_count(session, EventRow) - self.retention
             if excess > 0:
                 # FIFO for synthetic data only; future L1/L2 evidence needs its own
                 # retention policy and is never purged as a side effect of L0 ingestion.
@@ -74,7 +74,7 @@ class EventRepository:
         """One replay page ordered in SQL; only the page payloads are decoded."""
         query = self._window(start, end, source_id, scenario, segment_id)
         with self.session() as session:
-            total = session.scalar(select(func.count()).select_from(query.subquery()))
+            total = row_count(session, query.subquery())
             if total > MAX_SELECTION:
                 raise ValueError("more than 10000 events; narrow the time range or source")
             rows = session.scalars(
@@ -124,7 +124,7 @@ class EventRepository:
             ).all()
             return {
                 "items": [json.loads(row.payload) for row in rows],
-                "total": session.scalar(select(func.count()).select_from(EventRow)),
+                "total": row_count(session, EventRow),
                 "limit": limit,
                 "offset": offset,
             }

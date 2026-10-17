@@ -19,6 +19,5 @@ def upgrade():
 
 
 def downgrade():
-    op.drop_table("analytics_reports")
-    op.drop_index("ix_sensing_events_segment_id", "sensing_events")
-    op.drop_column("sensing_events", "segment_id")
+    # Same policy as 0003+: never drop stored history; restore from a backup instead.
+    raise RuntimeError("destructive downgrade is not supported")

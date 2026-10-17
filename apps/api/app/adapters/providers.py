@@ -1,9 +1,10 @@
 """Composition boundary. The legacy laboratory is opt-in and lazily imported."""
 
 from app.adapters.native import NativeProvider
+from app.ports.source import SourceProvider
 
 
-def build_provider(source, config, settings):
+def build_provider(source, config, settings) -> SourceProvider:
     if source in {"synthetic-native", "SIMULATED"}:
         return NativeProvider(config)
     if source == "RUVIEW_STREAM" and settings and settings.legacy_lab_enabled:

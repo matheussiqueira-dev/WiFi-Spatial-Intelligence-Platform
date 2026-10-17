@@ -32,6 +32,8 @@ class AuditRow(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     timestamp: Mapped[str] = mapped_column(String(40))
     action: Mapped[str] = mapped_column(String(64))
+    # Identifier of the affected record (e.g. a rule); never tokens, IPs or payloads.
+    subject_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
 
 
 class SecurityDenialRow(Base):
@@ -55,6 +57,8 @@ class LocalRuleRow(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
     active: Mapped[bool] = mapped_column()
     payload: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    revoked_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
 
 
 class RuleDecisionRow(Base):
@@ -70,5 +74,5 @@ class ExperimentJobRow(Base):
     payload: Mapped[str] = mapped_column(Text)
 
 
-def audit_row(action: str) -> AuditRow:
-    return AuditRow(timestamp=datetime.now(UTC).isoformat(), action=action)
+def audit_row(action: str, subject_id: str | None = None) -> AuditRow:
+    return AuditRow(timestamp=datetime.now(UTC).isoformat(), action=action, subject_id=subject_id)

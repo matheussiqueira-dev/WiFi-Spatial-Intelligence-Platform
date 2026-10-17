@@ -1,5 +1,32 @@
 # Decisões de arquitetura — v3.0
 
+## ADR-013 — Histórico de regras, tipagem verificada e imagens fixadas
+
+Status: Accepted. Data: 16/10/2026. Fecha contracts-data-13 e pendências do PR #6.
+
+- Migração 0009 adiciona `local_rules.created_at/revoked_at` e `audit_events.subject_id`
+  (anuláveis). Regras anteriores ficam com NULL: o horário real é desconhecido e não é
+  inventado; a UI diz "criação anterior ao histórico". Revogar de novo mantém o primeiro
+  horário e não duplica auditoria. `subject_id` guarda só o ID do registro afetado.
+- mypy (MIT, plugin pydantic) roda no gate e no CI com `check_untyped_defs` sobre `app/`.
+  Os `type: ignore[assignment]` em `contracts.py` são o estreitamento deliberado dos
+  literais do contrato 2.0.0; `warn_unused_ignores` impede ignorar além disso.
+- Imagens base fixadas pelo digest do índice multi-arquitetura; atualização só por PR
+  revisado (Dependabot `docker`). O digest 3.13 do `Dockerfile.verify` é argumento.
+
+## ADR-012 — Perfil de capacidades aplicado na borda HTTP/WS
+
+Status: Accepted. Data: 16/10/2026. Complementa a seção 0A do plano v4.
+
+- O catálogo deixa de ser só informativo: cada router declara a capacidade que expõe e
+  `require_capability` recusa com 403 quando o perfil ativo a desliga. A verificação
+  roda depois de `authorize`, para não revelar o perfil a clientes sem token.
+- Superfícies operacionais (status, catálogo, governança, health) ficam abertas em todo
+  perfil; o status contém apenas estado sintético e é necessário ao login do dashboard.
+- O frontend lê o catálogo no login e omite módulos desligados, mas a fonte de verdade é
+  o backend. Capacidade nova sem entrada no catálogo falha na importação do router.
+- Etiquetas regulatórias continuam hipóteses de trabalho, não parecer jurídico.
+
 ## ADR-011 — Composition root, routers por contexto e repositórios SQLite
 
 Status: Accepted. Data: 15/10/2026. Complementa ADR-001.

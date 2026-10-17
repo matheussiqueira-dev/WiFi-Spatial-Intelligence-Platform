@@ -1,9 +1,10 @@
 """Operation audit trail and bounded, aggregated security denials (no tokens, IPs or payloads)."""
 
 from datetime import UTC, datetime
+from typing import cast
 from uuid import uuid4
 
-from sqlalchemy import select
+from sqlalchemy import Table, select
 from sqlalchemy.dialects.sqlite import insert
 
 from app.adapters.sqlite.database import Database
@@ -35,7 +36,7 @@ class AuditRepository:
         if action not in SECURITY_ACTIONS:
             raise ValueError("unsupported security audit action")
         now = datetime.now(UTC).isoformat()
-        table = SecurityDenialRow.__table__
+        table = cast(Table, SecurityDenialRow.__table__)
         statement = insert(table).values(
             action=action, count=1, first_seen=now, last_seen=now, correlation_id=str(uuid4())
         )
@@ -70,5 +71,6 @@ class AuditRepository:
         with self.session() as session:
             return [
                 {"timestamp": r.timestamp, "action": r.action}
+                | ({"subject_id": r.subject_id} if r.subject_id else {})
                 for r in session.scalars(select(AuditRow).order_by(AuditRow.id.desc()).limit(100))
             ]

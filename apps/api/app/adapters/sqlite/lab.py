@@ -40,6 +40,10 @@ class LabRepository:
                 "offset": offset,
             }
 
+    def model_run_count(self):
+        with self.session() as session:
+            return session.scalar(select(func.count()).select_from(ModelRunRow))
+
     def model_run(self, identifier):
         with self.session() as session:
             row = session.get(ModelRunRow, identifier)

@@ -29,7 +29,7 @@ class PacketReceiver:
             raise ValueError("only bounded virtual pairing supported")
         self.paired = frozenset(paired)
         self.clock = clock
-        self.last = {}
+        self.last: dict[str, tuple[int, datetime]] = {}
 
     def receive(self, raw: bytes, *, authorized=False):
         if not authorized:
@@ -63,7 +63,7 @@ class PacketReceiver:
             if type(sequence) is not int or not 0 <= sequence < 2**32:
                 raise ValueError("invalid sequence")
             timestamp = datetime.fromisoformat(data["timestamp"])
-            if timestamp.utcoffset() is None or timestamp.utcoffset().total_seconds() != 0:
+            if (offset := timestamp.utcoffset()) is None or offset.total_seconds() != 0:
                 raise ValueError("UTC required")
             age = (self.clock() - timestamp).total_seconds()
             if not -2 <= age <= 60:

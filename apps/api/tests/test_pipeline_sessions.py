@@ -128,3 +128,34 @@ def test_unexpected_provider_error_stops_the_session_but_keeps_ingest_alive():
     assert alive, "ingest task died; no source would produce events until restart"
     assert pipeline.state == "stopped"
     assert pipeline.error
+
+
+def test_paused_state_is_reported_only_after_the_queue_is_drained():
+    class SlowStore(GatedStore):
+        def write(self, event, segment_id=...):
+            time.sleep(0.05)
+            self.written.append(segment_id)
+            return True
+
+    async def scenario():
+        store = SlowStore()
+        pipeline = Pipeline(store, settings())
+        await pipeline.control("start", SimulationConfig(speed=4))
+        for tick in range(3):
+            await pipeline.queue.put(
+                (pipeline.session_generation, "s", 0.0, pipeline.provider.sample())
+            )
+        consume = asyncio.create_task(pipeline.consume())
+        pause = asyncio.create_task(pipeline.control("pause"))
+        observed = []
+        while not pause.done():
+            observed.append((pipeline.state, len(store.written)))
+            await asyncio.sleep(0.005)
+        consume.cancel()
+        await asyncio.gather(consume, return_exceptions=True)
+        await pipeline.provider.disconnect()
+        return observed, len(store.written)
+
+    observed, written = asyncio.run(scenario())
+    assert written == 3
+    assert all(count == written for state, count in observed if state == "paused")

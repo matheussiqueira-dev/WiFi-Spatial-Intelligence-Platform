@@ -28,7 +28,7 @@ try {
         } catch { Start-Sleep -Milliseconds 250 }
     }
     if (-not $ready) { throw 'API startup timed out. Inspect artifacts/api.stderr.log.' }
-    Write-Output "API: http://127.0.0.1:$ApiPort/docs | Console: http://127.0.0.1:$WebPort/dashboard"
+    Write-Output "API: http://127.0.0.1:$ApiPort/api/v1/health | Console: http://127.0.0.1:$WebPort/dashboard"
     npm.cmd run dev --workspace apps/web -- --port $WebPort
     Assert-Exit 'Web development server'
 } finally {

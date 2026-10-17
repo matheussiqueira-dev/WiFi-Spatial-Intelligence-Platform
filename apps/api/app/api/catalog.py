@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 
-from app.api.deps import ContainerDep, protected
+from app.api.deps import ContainerDep, protected, require_capability
 from app.capabilities import CapabilityCatalog, catalog
 from app.domain.acquisition import ROOM_HEIGHT_M, ROOM_WIDTH_M, VIRTUAL_SENSOR_POSITIONS
 
@@ -13,6 +13,12 @@ router = APIRouter(dependencies=protected)
 @public.get("/api/v1/health")
 def health():
     return {"status": "ok", "version": "0.1.0", "mode": "simulation-only"}
+
+
+@router.get("/api/v1/system/status")
+async def status(c: ContainerDep):
+    # Operational state stays readable in every profile (dashboard login uses it).
+    return c.pipeline.status()
 
 
 @router.get("/api/v1/providers")
@@ -68,7 +74,7 @@ def rooms():
     ]
 
 
-@router.get("/api/v1/sensors")
+@router.get("/api/v1/sensors", dependencies=[require_capability("spatial.presence")])
 def sensors(c: ContainerDep):
     pipeline = c.pipeline
     connected = pipeline.source == "synthetic-native" and pipeline.provider.connected
@@ -87,7 +93,7 @@ def sensors(c: ContainerDep):
     ]
 
 
-@router.get("/api/v1/occupancy")
+@router.get("/api/v1/occupancy", dependencies=[require_capability("spatial.presence")])
 def occupancy(c: ContainerDep):
     return {
         "measurement": c.pipeline.latest,

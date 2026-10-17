@@ -53,7 +53,20 @@ nos eventos agregados dos seis nós virtuais; usar a fonte de observação regis
 ```
 
 Guia de [analytics](docs/ANALYTICS_API.md), [backup/retenção](docs/DATA_RETENTION_AND_BACKUP.md),
-[decisões](docs/DECISIONS.md), [origem/limites clean-room](docs/ORIGINALITY_REGISTER.md).
+[decisões](docs/DECISIONS.md), [origem/limites clean-room](docs/ORIGINALITY_REGISTER.md),
+[laboratório de modelos](docs/MODEL_LAB.md), [regras dry-run](docs/AUTOMATION_DRY_RUN.md),
+[protótipo de pacotes](docs/ACQUISITION_PACKET_LAB.md) e
+[protocolo de validação RF](docs/RF_VALIDATION_PROTOCOL.md) — todos L0/sem hardware.
+
+Perfil de capacidades: `SPATIAL_CAPABILITY_PROFILE=lab` (padrão) libera tudo o que está
+implementado; `commercial-br` mantém só o grupo A (rede) e recusa com 403 presença,
+analytics espaciais, laboratório de modelos, automações e o stream ao vivo. O dashboard
+esconde esses módulos e mostra o motivo. Catálogo em `GET /api/v1/capabilities`.
+
+Stream ao vivo (`/api/v1/stream`, WebSocket): origem permitida obrigatória; o cliente
+envia `{"token": "..."}` como primeiro frame em até 5 s; o servidor responde envelopes
+`{"type": "status"|"event", "data": ...}` (status também a cada 2 s sem eventos). Até
+8 conexões; fechamentos 1008 (origem, token ou perfil) e 1013 (limite ou taxa).
 Os parágrafos de integração a seguir também documentam a compatibilidade histórica;
 para habilitá-la explicitamente, definir SPATIAL_LEGACY_LAB_ENABLED=true somente
 no laboratório local. Compose normal não exige o serviço externo.
@@ -98,7 +111,8 @@ Abra `http://127.0.0.1:3000/dashboard`. Informe o valor de `SPATIAL_TOKEN` do ar
 `.env` na tela de conexão. O token permanece apenas na memória da página: atualizar
 a página exige entrar novamente. Nunca publique ou compartilhe esse arquivo.
 
-API: `http://127.0.0.1:8000/docs`; health: `/api/v1/health`. O script aguarda a API
+API: health em `http://127.0.0.1:8000/api/v1/health`; esquema em `/openapi.json`. As páginas
+`/docs` e `/redoc` carregam scripts de CDN e só existem com `SPATIAL_API_DOCS_ENABLED=true`. O script aguarda a API
 ficar pronta e encerra somente o processo de backend que criou quando o frontend sai.
 As portas devem estar livres. Para usar outras portas:
 
@@ -164,11 +178,13 @@ O Compose deste MVP foi configurado para uso local, sem exposição na rede.
 ## Verificação
 
 ```powershell
-npm.cmd exec --workspace apps/web -- playwright install chromium
+npm.cmd exec --workspace apps/web -- playwright install chromium webkit
 .\scripts\verify\check.ps1
 ```
 
-O runner usa uma API nova em 4810, build de produção em 4310 e um SQLite temporário
+`check.ps1` roda os specs em Chromium e WebKit (`-Browsers chromium` restringe) com o
+perfil `lab` e, em seguida, o spec do perfil `commercial-br` (`E2E_PROFILE`), que
+confere no navegador que nenhum stream ou dado espacial é pedido. O runner usa uma API nova em 4810, build de produção em 4310 e um SQLite temporário
 exclusivo. Ele recusa reutilizar servidores existentes. Não toca no histórico de uso.
 O build para E2E aponta para 4810; para execução de produção manual, reconstrua com
 `npm.cmd run build` para restaurar o endereço padrão ou defina `NEXT_PUBLIC_API_URL`.
@@ -179,6 +195,7 @@ Comandos individuais:
 .\apps\api\.venv\Scripts\python.exe -m pytest apps/api/tests -q
 .\apps\api\.venv\Scripts\python.exe -m ruff check apps/api scripts/verify
 .\apps\api\.venv\Scripts\python.exe -m ruff format --check apps/api scripts/verify
+.\apps\api\.venv\Scripts\python.exe -m mypy --config-file apps/api/pyproject.toml apps/api/app
 npm.cmd run lint
 npm.cmd run format:check
 npm.cmd run typecheck
@@ -198,7 +215,9 @@ modo externo sem essas variáveis explícitas, recusam a porta 8000 e conferem n
 que a porta pertence ao projeto isolado antes de apagar qualquer dado.
 
 CI gratuito em `.github/workflows/ci.yml` (runners Linux): backend 3.12/3.13 com
-`linux_checks.py`, web, E2E Chromium, Gitleaks e npm audit. `.pre-commit-config.yaml`
+`linux_checks.py` (Ruff, mypy, testes, pip-audit), web, E2E Chromium + WebKit nos
+perfis `lab` e `commercial-br`, Gitleaks e npm audit. Imagens base dos Dockerfiles são
+fixadas por digest multi-arquitetura; o Dependabot propõe atualizações (também `docker`). `.pre-commit-config.yaml`
 é opcional (`pip install pre-commit`) e não substitui `check.ps1`.
 
 ## Organização
