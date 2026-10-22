@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { request, requestText } from "../lib/api";
+import { useAllows } from "./role-context";
 import {
   analyticsParams,
   analyticsSchema,
@@ -27,6 +28,7 @@ const format = (value: number | null, digits = 2) =>
 const time = (value: string) => new Date(value).toLocaleString("pt-BR");
 
 export default function AnalyticsPanel({ token }: { token: string }) {
+  const canOperate = useAllows("operator");
   const [start, setStart] = useState(() =>
     localDate(new Date(Date.now() - 86400000)),
   );
@@ -347,7 +349,11 @@ export default function AnalyticsPanel({ token }: { token: string }) {
             ))}
           </dl>
           <div className="actions analytics-actions">
-            <button disabled={busy || !applied} onClick={() => void save()}>
+            <button
+              hidden={!canOperate}
+              disabled={busy || !applied}
+              onClick={() => void save()}
+            >
               Salvar relatório
             </button>
             <button

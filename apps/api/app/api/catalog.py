@@ -2,12 +2,12 @@
 
 from fastapi import APIRouter
 
-from app.api.deps import ContainerDep, protected, require_capability
+from app.api.deps import ContainerDep, GatedRouter, require_capability, viewer
 from app.capabilities import CapabilityCatalog, catalog
 from app.domain.acquisition import ROOM_HEIGHT_M, ROOM_WIDTH_M, VIRTUAL_SENSOR_POSITIONS
 
 public = APIRouter()
-router = APIRouter(dependencies=protected)
+router = GatedRouter()
 
 
 @public.get("/api/v1/health")
@@ -15,13 +15,13 @@ def health():
     return {"status": "ok", "version": "0.1.0", "mode": "simulation-only"}
 
 
-@router.get("/api/v1/system/status")
+@router.get("/api/v1/system/status", dependencies=viewer)
 async def status(c: ContainerDep):
     # Operational state stays readable in every profile (dashboard login uses it).
     return c.pipeline.status()
 
 
-@router.get("/api/v1/providers")
+@router.get("/api/v1/providers", dependencies=viewer)
 def providers(c: ContainerDep):
     return [
         {"id": "synthetic-native", "status": "IMPLEMENTED_SYNTHETIC"},
@@ -34,7 +34,7 @@ def providers(c: ContainerDep):
     ]
 
 
-@router.get("/api/v1/features")
+@router.get("/api/v1/features", dependencies=viewer)
 def features():
     # Synthetic implementations only; real sensing claims live in /capabilities evidence.
     return [
@@ -56,12 +56,12 @@ def features():
     ]
 
 
-@router.get("/api/v1/capabilities", response_model=CapabilityCatalog)
+@router.get("/api/v1/capabilities", response_model=CapabilityCatalog, dependencies=viewer)
 def capabilities(c: ContainerDep):
     return catalog(c.settings.capability_profile)
 
 
-@router.get("/api/v1/rooms")
+@router.get("/api/v1/rooms", dependencies=viewer)
 def rooms():
     return [
         {
@@ -74,7 +74,7 @@ def rooms():
     ]
 
 
-@router.get("/api/v1/sensors", dependencies=[require_capability("spatial.presence")])
+@router.get("/api/v1/sensors", dependencies=[*viewer, require_capability("spatial.presence")])
 def sensors(c: ContainerDep):
     pipeline = c.pipeline
     connected = pipeline.source == "synthetic-native" and pipeline.provider.connected
@@ -93,7 +93,7 @@ def sensors(c: ContainerDep):
     ]
 
 
-@router.get("/api/v1/occupancy", dependencies=[require_capability("spatial.presence")])
+@router.get("/api/v1/occupancy", dependencies=[*viewer, require_capability("spatial.presence")])
 def occupancy(c: ContainerDep):
     return {
         "measurement": c.pipeline.latest,
@@ -103,12 +103,12 @@ def occupancy(c: ContainerDep):
     }
 
 
-@router.get("/api/v1/models")
+@router.get("/api/v1/models", dependencies=viewer)
 def models():
     return {"items": [], "reason": "no inference model installed or validated"}
 
 
-@router.get("/api/v1/validation")
+@router.get("/api/v1/validation", dependencies=viewer)
 def validation():
     return {
         "real_data_validated": False,
@@ -117,7 +117,7 @@ def validation():
     }
 
 
-@router.get("/api/v1/governance/status")
+@router.get("/api/v1/governance/status", dependencies=viewer)
 def governance(c: ContainerDep):
     return {
         "security_audit": c.store.security_audits(),
@@ -125,7 +125,7 @@ def governance(c: ContainerDep):
         "real_sensing_enabled": False,
         "consent_records": [],
         "retention_events": c.settings.retention_events,
-        "authentication": "loopback development bearer token",
+        "authentication": "local role tokens (admin/operator/viewer) and bootstrap SPATIAL_TOKEN",
         "clinical_validation": False,
         "audit": c.store.audits(),
     }

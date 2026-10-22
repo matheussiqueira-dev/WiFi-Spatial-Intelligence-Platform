@@ -1,12 +1,16 @@
 """Live WebSocket stream: origin check, first-frame auth, bounded per-subscriber queues."""
 
 import asyncio
-import hmac
+import time
 
 from fastapi import APIRouter, WebSocket
 from starlette.websockets import WebSocketDisconnect
 
+from app.api.deps import resolve_principal
 from app.capabilities import is_enabled
+
+# Personal tokens are re-checked on this cadence, so a revocation closes live streams.
+REVALIDATE_SECONDS = 2.0
 
 router = APIRouter()
 
@@ -42,13 +46,13 @@ async def stream(ws: WebSocket):
     try:
         await ws.accept()
         auth = await asyncio.wait_for(ws.receive_json(), timeout=settings.ws_auth_timeout_seconds)
-        if (
-            not isinstance(auth, dict)
-            or not isinstance(auth.get("token"), str)
-            or not hmac.compare_digest(
-                auth["token"].encode("utf-8"), settings.token.encode("utf-8")
-            )
-        ):
+        principal = (
+            await resolve_principal(c, auth["token"])
+            if isinstance(auth, dict) and isinstance(auth.get("token"), str)
+            else None
+        )
+        # Every role may watch the stream; viewer is the minimum.
+        if principal is None:
             limiter.check("auth", peer)
             await asyncio.to_thread(store.security_denial, "ws.auth_denied")
             await ws.close(code=1008)
@@ -64,7 +68,13 @@ async def stream(ws: WebSocket):
                     return
 
         receiver = asyncio.create_task(receive_disconnect())
+        checked = time.monotonic()
         while not receiver.done():
+            if not principal.bootstrap and time.monotonic() - checked >= REVALIDATE_SECONDS:
+                checked = time.monotonic()
+                if not await asyncio.to_thread(c.access_tokens.active, principal.subject_id):
+                    await ws.close(code=1008, reason="access token revoked")
+                    break
             # One pending get survives heartbeats, so a dequeued event is never dropped.
             pending = pending or asyncio.create_task(queue.get())
             done, _ = await asyncio.wait(

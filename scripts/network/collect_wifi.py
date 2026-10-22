@@ -58,7 +58,11 @@ def main() -> int:
             "collector requires the Windows host; it cannot read the host radio from Docker"
         )
     endpoint = local_endpoint(args.api_url)
-    token = Settings(_env_file=ROOT / ".env").token
+    # Least privilege: an operator token (POST samples and config) may replace the admin
+    # bootstrap token. Read from the environment only, never from arguments or logs.
+    token = (
+        os.environ.get("SPATIAL_AGENT_TOKEN") or Settings(_env_file=ROOT / ".env").token
+    )
     opener = build_opener(ProxyHandler({}), NoRedirect())
     session_id = uuid4()
     runtime = ROOT / "runtime"

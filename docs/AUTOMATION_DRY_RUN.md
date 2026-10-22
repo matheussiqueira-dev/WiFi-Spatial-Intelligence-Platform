@@ -21,6 +21,6 @@ Excluir eventos sintéticos não revoga regras nem apaga decisões nesta versão
 referências antigas podem deixar de ter evento no histórico por retenção/exclusão.
 IDs não pessoais e L0 não substituem política de dados se houver captura futura.
 
-F5 continua parcial: sem RBAC multiusuário, consentimento físico, webhooks, Home
-Assistant ou plugins. Bearer local autoriza somente criação/revogação de previews.
+F5 continua parcial: sem consentimento físico, Home Assistant ou plugins. Criar e
+revogar regras exige papel `operator` ou `admin`; `viewer` só consulta (ADR-015).
 Qualquer destino externo exigirá nova autorização/allowlist/auth e consentimento.

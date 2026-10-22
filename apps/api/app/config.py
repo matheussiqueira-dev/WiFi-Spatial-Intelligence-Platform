@@ -13,7 +13,11 @@ class Settings(BaseSettings):
         extra="ignore",
         hide_input_in_errors=True,
     )
+    # Bootstrap admin token; personal role tokens are issued through /api/v1/access/tokens.
     token: str = Field(min_length=32, max_length=512, repr=False)
+    # HMAC key for personal token hashes. Empty: derived from SPATIAL_TOKEN, so rotating
+    # the bootstrap token also invalidates every personal token (documented kill switch).
+    access_token_key: str = Field(default="", max_length=512, repr=False)
     database_url: str = "sqlite:///./runtime/spatial.db"
     retention_events: int = Field(default=10000, ge=100, le=100000)
     origins: list[str] = ["http://127.0.0.1:3000", "http://localhost:3000"]
@@ -63,6 +67,13 @@ class Settings(BaseSettings):
             or url.fragment
         ):
             raise ValueError("webhook URL must be http(s) to a loopback or private IP")
+        return value
+
+    @field_validator("access_token_key")
+    @classmethod
+    def strong_access_key(cls, value: str):
+        if value and len(value) < 32:
+            raise ValueError("access token key must have at least 32 characters")
         return value
 
     @model_validator(mode="after")

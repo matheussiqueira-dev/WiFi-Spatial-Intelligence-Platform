@@ -2,16 +2,16 @@
 
 import asyncio
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import HTTPException, Query
 
-from app.api.deps import ContainerDep, ProtectiveDenial, gated
+from app.api.deps import ContainerDep, GatedRouter, ProtectiveDenial, admin, operator, viewer
 from app.contracts import SimulationConfig, SourceSelection
 from app.domain.acquisition import SCENARIOS
 
-router = APIRouter(dependencies=gated("spatial.presence"))
+router = GatedRouter("spatial.presence")
 
 
-@router.get("/api/v1/events")
+@router.get("/api/v1/events", dependencies=viewer)
 async def events(
     c: ContainerDep,
     limit: int = Query(50, ge=1, le=200),
@@ -20,7 +20,7 @@ async def events(
     return await asyncio.to_thread(c.store.history, limit, offset)
 
 
-@router.delete("/api/v1/events/synthetic")
+@router.delete("/api/v1/events/synthetic", dependencies=admin)
 async def delete_events(c: ContainerDep):
     try:
         await c.pipeline.delete_history()
@@ -29,12 +29,12 @@ async def delete_events(c: ContainerDep):
     return {"deleted": "L0_SYNTHETIC", "audit_preserved": True}
 
 
-@router.get("/api/v1/simulation/scenarios")
+@router.get("/api/v1/simulation/scenarios", dependencies=viewer)
 def scenarios():
     return list(SCENARIOS)
 
 
-@router.post("/api/v1/simulation/start")
+@router.post("/api/v1/simulation/start", dependencies=operator)
 async def start(config: SimulationConfig, c: ContainerDep):
     try:
         await c.pipeline.control("start", config)
@@ -43,7 +43,7 @@ async def start(config: SimulationConfig, c: ContainerDep):
     return c.pipeline.status()
 
 
-@router.post("/api/v1/sources/select")
+@router.post("/api/v1/sources/select", dependencies=operator)
 async def select_source(selection: SourceSelection, c: ContainerDep):
     try:
         await c.pipeline.select_source(selection.source)
@@ -53,7 +53,7 @@ async def select_source(selection: SourceSelection, c: ContainerDep):
 
 
 # Registered after /simulation/start so the literal path keeps precedence.
-@router.post("/api/v1/simulation/{action}")
+@router.post("/api/v1/simulation/{action}", dependencies=operator)
 async def control(action: str, c: ContainerDep):
     if action not in {"pause", "resume", "stop", "reset"}:
         raise HTTPException(404, "unknown simulation action")

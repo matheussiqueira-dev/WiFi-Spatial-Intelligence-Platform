@@ -1,5 +1,16 @@
 # Relatório de verificação
 
+## Perfis de acesso locais (Claude Code) — 17/10/2026
+
+| Comando / inspeção | Resultado |
+| --- | --- |
+| `test_access_roles.py` | 21 pass: toda rota autenticada declara um papel após `authorize` e antes da capacidade; política de escrita igual à matriz declarada; matriz papel × rota executada em todas as rotas (403 só abaixo do mínimo); 401 antes do papel; papel antes do perfil commercial-br; `/access/me`; token ausente do dump SQLite/listagem/governança e hash = HMAC com chave do servidor; revogação imediata e idempotente; `actor_id`/`subject_id` na auditoria; `role.denied` agregado; validação de rótulo/papel; limite de ativos; viewer assiste ao stream e revogação fecha 1008; token revogado recusado no WS; rotação do bootstrap invalida tokens derivados; chave explícita sobrevive |
+| Testes web | 43 pass (4 novos em `access.test.ts`, 403 em `api.test.ts`) |
+| `e2e/access-roles.spec.ts` | admin emite token viewer pela UI (axe sem violações); viewer vê selo de papel, stream ao vivo, nenhum botão de escrita nem seção admin, sem storage/URL com token, mobile sem overflow, axe sem violações; API 403; revogação → alerta 401 e stream "Acesso recusado" |
+| Red no gate (1ª execução) | 8 E2E (4 × 2 navegadores): `[hidden]` inserido numa lista de seletores escondia `.network-controls` e selo alargava o mobile; corrigido |
+| `check.ps1` final | exit 0: Ruff/format, mypy (59), contratos, 320 backend, 6 launchers, Prettier, 43 web, ESLint, tsc, build, 20 E2E Chromium+WebKit (1,6 min, 2 skip RuView), 1 E2E commercial-br |
+| Não executado | Docker/demo e Docker E2E; `Dockerfile.verify` Linux; NVDA |
+
 ## Grupo A, F5 e F6 (Claude Code) — 17/10/2026
 
 | Comando / inspeção | Resultado |

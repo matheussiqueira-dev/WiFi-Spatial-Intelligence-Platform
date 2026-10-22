@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { request, requestText } from "../lib/api";
+import { useAllows } from "./role-context";
 import { download } from "../lib/analytics";
 import {
   locationSchema,
@@ -27,6 +28,8 @@ const metric = (value: number | null | undefined, unit = "") =>
     : `${value.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}${unit}`;
 
 export default function NetworkPanel({ token }: { token: string }) {
+  const canOperate = useAllows("operator");
+  const isAdmin = useAllows("admin");
   const [report, setReport] = useState<NetworkReport | null>(null);
   const [hours, setHours] = useState("24");
   const [location, setLocation] = useState("");
@@ -285,6 +288,7 @@ export default function NetworkPanel({ token }: { token: string }) {
             <button
               type="button"
               className="secondary"
+              hidden={!isAdmin}
               disabled={busy || !report.total}
               onClick={() => void erase()}
             >
@@ -293,7 +297,11 @@ export default function NetworkPanel({ token }: { token: string }) {
                 : "Apagar histórico de rede"}
             </button>
           </div>
-          <form className="network-location" onSubmit={configure}>
+          <form
+            className="network-location"
+            onSubmit={configure}
+            hidden={!canOperate}
+          >
             <label>
               Nome do ponto atual
               <input

@@ -24,7 +24,9 @@ export function streamCloseOutcome(code: number) {
 
 export function statusMessage(status: number, retryAfter: string | null) {
   if (status === 401)
-    return "Token inválido. Confira o SPATIAL_TOKEN do arquivo .env.";
+    return "Token inválido ou revogado. Confira seu token pessoal ou o SPATIAL_TOKEN do arquivo .env.";
+  if (status === 403)
+    return "Acesso recusado: seu papel ou o perfil de capacidades ativo não permite esta operação.";
   if (status === 409)
     return "A operação conflita com o estado atual. Atualize e tente novamente.";
   if (status === 422)

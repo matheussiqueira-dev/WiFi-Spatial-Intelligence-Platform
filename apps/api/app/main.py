@@ -12,8 +12,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
-from app.api import analytics, automation, catalog, model_lab, simulation, stream
-from app.api.deps import ProtectiveDenial, gated
+from app.api import access, analytics, automation, catalog, model_lab, simulation, stream
+from app.api.deps import ProtectiveDenial
 from app.bootstrap import Container, build_container
 from app.config import Settings
 from app.network_api import network_router
@@ -115,12 +115,8 @@ def create_app(settings: Settings | None = None):
         allow_credentials=False,
     )
 
-    app.include_router(
-        network_router(
-            c.network_store, gated("network.link_diagnostics"), c.alert_webhook, c.settings
-        )
-    )
-    for module in (automation, model_lab, analytics):
+    app.include_router(network_router(c.network_store, c.alert_webhook, c.settings))
+    for module in (access, automation, model_lab, analytics):
         app.include_router(module.router)
     app.include_router(catalog.public)
     app.include_router(simulation.router)

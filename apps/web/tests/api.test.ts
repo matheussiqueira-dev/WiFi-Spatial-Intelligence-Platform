@@ -70,6 +70,7 @@ test("validation, rate limit and unavailability map to actionable pt-BR text", (
   assert.match(statusMessage(429, null), /Limite/);
   assert.match(statusMessage(503, null), /indisponível/);
   assert.match(statusMessage(401, null), /Token inválido/);
+  assert.match(statusMessage(403, null), /papel/);
   assert.match(statusMessage(500, null), /erro 500/);
 });
 

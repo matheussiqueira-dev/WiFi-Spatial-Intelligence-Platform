@@ -1,5 +1,37 @@
 # Decisões de arquitetura — v3.0
 
+## ADR-015 — Perfis de acesso locais (RBAC) com tokens por pessoa
+
+Status: Accepted. Data: 17/10/2026. Plano v4, F5 (RBAC local). Substitui o Bearer único
+compartilhado como modelo de uso; o `SPATIAL_TOKEN` continua válido como admin de bootstrap.
+
+- Três papéis ordenados: `viewer` (somente leitura e stream), `operator` (simulação, fonte,
+  ponto de medição, ingestão do agente, regras, relatórios e experimentos) e `admin`
+  (tokens, exclusão de históricos, teste do webhook). Tabela da política em
+  `tests/test_access_roles.py::WRITE_POLICY`; todo GET é `viewer`, exceto a listagem de
+  tokens (`admin`).
+- Tokens `wsp_` + 256 bits aleatórios. Só o HMAC-SHA256 sob uma chave do servidor fica na
+  tabela `access_tokens` (migração 0011): uma cópia do banco sozinha não permite testar
+  candidatos. Chave = `SPATIAL_ACCESS_TOKEN_KEY` (≥ 32) ou, se vazia, derivada do
+  `SPATIAL_TOKEN` com separação de domínio — trocar o token de bootstrap invalida todos os
+  tokens pessoais (interruptor de emergência documentado). O valor aparece uma vez, com
+  `Cache-Control: no-store`.
+- Revogação grava `revoked_at` e mantém o registro; cada requisição consulta o banco, logo o
+  efeito é imediato. Streams WebSocket revalidam o token a cada 2 s e fecham com 1008.
+  `last_used_at` é atualizado no máximo uma vez por minuto para não gravar a cada leitura.
+- Ordem das recusas: 401 (token), 403 de papel, 403 de capacidade. `GatedRouter` exige que
+  toda rota declare `require_role` e acrescenta a capacidade do router por último; uma rota
+  sem papel falha na importação, em vez de abrir por omissão.
+- `audit_events.actor_id` (anulável) registra quem agiu (ID do token ou `bootstrap`) por
+  `ContextVar` definido na autenticação; trabalho em segundo plano e entradas anteriores a
+  0011 ficam NULL, sem preenchimento inventado. Negativas de papel entram no agregado
+  `role.denied`.
+- Não entra no catálogo de capacidades: é controle de plataforma, não capacidade de produto
+  recortável por mercado; desligá-lo num perfil não faria sentido.
+- Limites: até 50 tokens ativos e 500 registros. Sem expiração automática, sem senha, SSO ou
+  MFA; o dashboard esconde controles por conveniência, mas a API é a fronteira. Continua
+  sem aprovação para exposição fora de loopback.
+
 ## ADR-014 — Alertas de rede consultivos, webhook local e protocolo SWF1
 
 Status: Accepted. Data: 17/10/2026. Plano v4: grupo A primeiro; F5 e F6 parciais.
