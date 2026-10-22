@@ -1,5 +1,22 @@
 # Decisões de arquitetura — v3.0
 
+## ADR-015 — Impressão RF sintética e registro de modelos sem carga externa
+
+Status: Accepted. Data: 21/10/2026. Plano v4: F3B (impressão RF) e F4 (registro).
+
+- A impressão RF é um baseline estatístico explicável (média e dispersão de amplitude
+  por subportadora; distância = média do |z| da janela), com limiar calibrado em janelas
+  de referência retidas e abstenção abaixo de 12 quadros. Os quadros passam pelo caminho
+  SWF1 completo (codificação, HMAC, receptor) para exercitar a ingestão futura.
+- A avaliação publica também o ponto cego (mudanças de 1–5% em poucas subportadoras),
+  em vez de reportar só os casos fáceis. Nada é persistido: o resultado é determinístico
+  pela semente. Status IMPLEMENTED_SYNTHETIC/L0; só perfil `lab`.
+- O registro reverifica os artefatos do projeto a cada leitura (checksum recalculado dos
+  parâmetros, não o nome do arquivo). Modelos de terceiros entram só como ficha:
+  metadados, licença SPDX de uma lista fechada, sha256 e URL https informativa; o
+  arquivo nunca é enviado, baixado ou executado (status NOT_LOADED). A classificação de
+  uso comercial é hipótese de trabalho para revisão jurídica.
+
 ## ADR-015 — Perfis de acesso locais (RBAC) com tokens por pessoa
 
 Status: Accepted. Data: 17/10/2026. Plano v4, F5 (RBAC local). Substitui o Bearer único

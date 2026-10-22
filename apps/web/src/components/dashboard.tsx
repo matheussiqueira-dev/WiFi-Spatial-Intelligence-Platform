@@ -52,6 +52,11 @@ const ModelLabPanel = memo(
     loading: () => <p role="status">Carregando laboratório…</p>,
   }),
 );
+const RfLabPanel = memo(
+  dynamic(() => import("./rf-lab-panel"), {
+    loading: () => <p role="status">Carregando impressão RF…</p>,
+  }),
+);
 const CapabilitiesPanel = memo(
   dynamic(() => import("./capabilities-panel"), {
     loading: () => <p role="status">Carregando catálogo…</p>,
@@ -965,6 +970,14 @@ export default function Dashboard() {
             )}
             {allowed?.has("spatial.activity_baseline") && (
               <ModelLabPanel token={token} />
+            )}
+            {(allowed?.has("spatial.rf_fingerprint") ||
+              allowed?.has("lab.model_registry")) && (
+              <RfLabPanel
+                token={token}
+                fingerprint={allowed.has("spatial.rf_fingerprint")}
+                registry={allowed.has("lab.model_registry")}
+              />
             )}
             {allowed?.has("automation.dry_run_rules") && (
               <AutomationPanel token={token} />

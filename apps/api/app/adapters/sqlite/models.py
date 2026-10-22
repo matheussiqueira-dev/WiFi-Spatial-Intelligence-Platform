@@ -72,6 +72,14 @@ class RuleDecisionRow(Base):
     payload: Mapped[str] = mapped_column(Text)
 
 
+class ModelRegistryRow(Base):
+    __tablename__ = "model_registry"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    created_at: Mapped[str] = mapped_column(String(40))
+    sha256: Mapped[str] = mapped_column(String(64), unique=True)
+    payload: Mapped[str] = mapped_column(Text)
+
+
 class ExperimentJobRow(Base):
     __tablename__ = "experiment_jobs"
     id: Mapped[str] = mapped_column(String(36), primary_key=True)

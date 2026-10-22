@@ -1,5 +1,26 @@
 # Progresso da plataforma
 
+## Claude Code: F3B/F4 e manutenção — 21/10/2026
+
+- PR #13 (perfis de acesso, sessão paralela) mesclado. Dependabot: #8 (Python 3.14) e
+  #9 (Node 25) fechados por saírem das versões suportadas; #2, #3, #5, #10, #11 e #12
+  reunidos e validados no PR #14. O CI do #14 achou um aviso novo do certifi
+  (PYSEC-2026-4320, só no lock de desenvolvimento), corrigido para 2026.10.19.
+- **Impressão RF do ambiente** (`spatial.rf_fingerprint`: PLANNED → IMPLEMENTED_SYNTHETIC):
+  canal sintético com perfil multipercurso por ambiente; quadros SWF1 autenticados;
+  fingerprint por subportadora, limiar calibrado, abstenção. Avaliação por semente:
+  falso positivo 0/40, mudanças grandes 40/40, outro ambiente 10/10, mudanças sutis 0/40
+  (ponto cego publicado), 10/10 abstenções.
+- **Registro de modelos** (`lab.model_registry`): artefatos do projeto com integridade
+  reverificada (VERIFIED/MISMATCH/UNREADABLE); fichas de terceiros só com metadados,
+  licença SPDX e classificação de uso comercial; migração 0012; papéis admin/viewer.
+- Painel "Impressão RF do ambiente e registro de modelos" (axe sem violações em
+  Chromium e WebKit).
+
+Pendente: demo Docker com migrações 0011/0012 (Docker Desktop parado e sem reinício
+nesta sessão); ONNX (sem modelo treinável que justifique o formato); placa ESP32-S3
+(decisão de compra/gravação do proprietário); NVDA; Firefox fora do gate.
+
 ## Claude Code: perfis de acesso locais (RBAC, F5) — 17/10/2026
 
 Branch `feat/access-roles` (sobre `main` 4f0a091). ADR-015.

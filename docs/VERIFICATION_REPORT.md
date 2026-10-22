@@ -1,5 +1,17 @@
 # Relatório de verificação
 
+## F3B/F4 e dependências (Claude Code) — 21/10/2026
+
+| Comando / inspeção | Resultado |
+| --- | --- |
+| PR #14 local (`check.ps1`) | exit 0: mypy (59), 320 backend, 6 launchers, 43 web, build, 20 E2E Chromium+WebKit, 1 E2E commercial-br; `pip check` e `npm audit` limpos |
+| PR #14 CI | Red: pip-audit acusou certifi 2026.7.22 (PYSEC-2026-4320) no lock de dev; corrigido para 2026.10.19, backend 3.12/3.13 verdes |
+| Docker local | BLOCKED: engine parou; Start-Process do Docker Desktop falhou nesta sessão |
+| Avaliação RF (sementes 1, 42, 999) | ~0,23 s cada; FP 0, grandes 100%, outro ambiente 100%, sutis 0% (antes de publicar o conjunto sutil, as taxas eram só dos casos fáceis) |
+| `test_rf_lab.py` | 8 pass: referência mínima; normal × mudança; abstenção; determinismo e ponto cego; papéis; integridade VERIFIED → MISMATCH → UNREADABLE; fichas admin-only, licença, duplicata, 5 entradas inválidas; perfil comercial 403 |
+| E2E `rf-lab.spec.ts` | 2 pass (Chromium, WebKit) com axe do painel inteiro |
+| `check.ps1` final (após PR #14 na main) | exit 0: mypy (63), 328 backend, 6 launchers, 46 web, build, 22 E2E Chromium+WebKit (1,7 min, 2 skip RuView), 1 E2E commercial-br |
+
 ## Perfis de acesso locais (Claude Code) — 17/10/2026
 
 | Comando / inspeção | Resultado |

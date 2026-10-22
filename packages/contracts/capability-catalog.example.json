@@ -192,8 +192,8 @@
       "id": "spatial.rf_fingerprint",
       "name": "Impress\u00e3o RF e anomalia do ambiente",
       "group": "B",
-      "status": "PLANNED",
-      "evidence_ceiling": null,
+      "status": "IMPLEMENTED_SYNTHETIC",
+      "evidence_ceiling": "L0_SYNTHETIC",
       "regulatory": [
         "ANATEL_RADIO"
       ],
@@ -202,9 +202,27 @@
       "profiles": [
         "lab"
       ],
-      "endpoint": null,
-      "note": "Depende de CSI; n\u00e3o identifica qual objeto ou pessoa mudou.",
-      "enabled": false
+      "endpoint": "/api/v1/model-lab/rf-fingerprint/evaluations",
+      "note": "Baseline z-score sobre quadros SWF1 sint\u00e9ticos; n\u00e3o identifica o que mudou.",
+      "enabled": true
+    },
+    {
+      "id": "lab.model_registry",
+      "name": "Registro de modelos com checksum e licen\u00e7a",
+      "group": "B",
+      "status": "IMPLEMENTED_SYNTHETIC",
+      "evidence_ceiling": "L0_SYNTHETIC",
+      "regulatory": [
+        "NONE"
+      ],
+      "requires_hardware": false,
+      "requires_consent": false,
+      "profiles": [
+        "lab"
+      ],
+      "endpoint": "/api/v1/model-lab/models",
+      "note": "Artefatos reverificados; modelos externos s\u00f3 como ficha, nunca carregados.",
+      "enabled": true
     },
     {
       "id": "health.respiration",
