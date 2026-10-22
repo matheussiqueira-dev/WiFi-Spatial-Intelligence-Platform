@@ -5,7 +5,7 @@ requires-python = ">=3.12,<3.14"
 dependencies = ["fastapi", "uvicorn", "websockets", "sqlalchemy", "alembic", "pydantic-settings"]
 
 [build-system]
-requires = ["setuptools>=77"]
+requires = ["setuptools>=84.0.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
