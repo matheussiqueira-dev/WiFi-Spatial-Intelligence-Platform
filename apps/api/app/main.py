@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
-from app.api import access, analytics, automation, catalog, model_lab, simulation, stream
+from app.api import access, analytics, automation, catalog, model_lab, rf_lab, simulation, stream
 from app.api.deps import ProtectiveDenial
 from app.bootstrap import Container, build_container
 from app.config import Settings
@@ -118,6 +118,8 @@ def create_app(settings: Settings | None = None):
     app.include_router(network_router(c.network_store, c.alert_webhook, c.settings))
     for module in (access, automation, model_lab, analytics):
         app.include_router(module.router)
+    app.include_router(rf_lab.registry)
+    app.include_router(rf_lab.fingerprint)
     app.include_router(catalog.public)
     app.include_router(simulation.router)
     app.include_router(catalog.router)

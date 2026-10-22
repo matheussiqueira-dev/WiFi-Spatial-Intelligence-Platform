@@ -123,6 +123,15 @@ class Store:
         return self.reports_repository.report(identifier)
 
     # Model lab runs and jobs.
+    def register_model(self, card):
+        return self.lab.register_model(card)
+
+    def registered_models(self):
+        return self.lab.registered_models()
+
+    def unregister_model(self, identifier):
+        return self.lab.unregister_model(identifier)
+
     def save_model_run(self, result):
         return self.lab.save_model_run(result)
 
