@@ -12,7 +12,7 @@ Assert-Exit 'Python format'
 Assert-Exit 'Python types'
 & $pythonPath scripts/verify/export_contract.py --check
 Assert-Exit 'Published contracts'
-& $pythonPath -m pytest apps/api/tests -q
+& $pythonPath -m pytest apps/api/tests -q --cov=apps/api/app --cov-report=term --cov-fail-under=90
 Assert-Exit 'Backend tests'
 & $pythonPath -m pytest scripts/verify/tests -q
 Assert-Exit 'Launcher integration tests'

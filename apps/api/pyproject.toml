@@ -12,7 +12,7 @@ build-backend = "setuptools.build_meta"
 include = ["app*"]
 
 [project.optional-dependencies]
-dev = ["pytest", "httpx2", "ruff", "pip-audit", "mypy"]
+dev = ["pytest", "pytest-cov", "httpx2", "ruff", "pip-audit", "mypy"]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
