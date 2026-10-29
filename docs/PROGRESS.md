@@ -835,3 +835,24 @@ O volume de verificação foi preservado; não foi usado `down --volumes`.
    Python 3.13 está permitido, mas não foi executado nesta sessão.
 6. Sem sensoriamento físico, IA experimental, medições clínicas ou validação científica.
 7. Alterações continuam locais e sem commits, conforme a orientação atual.
+
+## Manutenção semanal: cobertura medida e gates — 29/10/2026
+
+- Auditoria em Linux (Python 3.13.18, Node 22.23.4): lint, formatação, tipos, 46 testes
+  web, 328 testes da API, 6 testes dos lançadores, contratos em sincronia, build e
+  auditorias (`npm audit` 0; `pip-audit` runtime e lock 0) — tudo PASS. Os advisories do
+  Next.js de 23/10 afetam `<=16.4.0`; `main` já está em 16.4.2 (PR #24).
+- Cobertura da API: `pytest-cov` 7.1.0 e `coverage` 7.17.0 adicionados ao extra `dev` e
+  ao lock de desenvolvimento (lock idêntico ao gerado por `lock_dependencies.py`; runtime
+  inalterado). `linux_checks.py` e `check.ps1` exigem 90%; medido 94,73%.
+- Cobertura web: `npm run test:web` usa a cobertura nativa do Node com limiar de 85% de
+  linhas; medido 89,75% nos módulos carregados pelos testes unitários. Painéis React sem
+  teste unitário não entram na medição (cobertos pelo E2E).
+- Comandos: `npm ci`, `pip install -r apps/api/requirements.lock.txt`, `npm run lint`,
+  `npm run format:check`, `npm run typecheck`, `npm run test:web`, `npm run build`,
+  `npm audit`, `python scripts/verify/export_contract.py --check`,
+  `python scripts/verify/linux_checks.py`.
+
+Não verificado nesta sessão: E2E Playwright (navegadores não instalados no ambiente
+Linux usado), Docker Compose (sem daemon) e `check.ps1` no Windows; o CI do GitHub é a
+referência. Validar o gate de cobertura também no Windows no próximo uso local.
