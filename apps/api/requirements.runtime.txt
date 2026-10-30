@@ -14,7 +14,7 @@ pydantic==2.14.1
 pydantic-core==2.50.1
 pydantic-settings==2.16.0
 python-dotenv==1.2.4
-sqlalchemy==2.1.4
+sqlalchemy==2.1.6
 starlette==1.8.0
 typing-extensions==4.16.0
 typing-inspection==0.4.4
