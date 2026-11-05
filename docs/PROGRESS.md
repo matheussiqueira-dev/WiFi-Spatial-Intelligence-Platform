@@ -856,3 +856,22 @@ O volume de verificação foi preservado; não foi usado `down --volumes`.
 Não verificado nesta sessão: E2E Playwright (navegadores não instalados no ambiente
 Linux usado), Docker Compose (sem daemon) e `check.ps1` no Windows; o CI do GitHub é a
 referência. Validar o gate de cobertura também no Windows no próximo uso local.
+
+## Manutenção semanal: Next.js 16.4.5 e dependências — 05/11/2026
+
+- Auditoria em Linux (Python 3.13.18, Node 22.23.4): lint, formatação, tipos, 46 testes
+  web, 328 testes da API, 6 testes dos lançadores, contratos em sincronia, build,
+  `npm audit` e `pip_audit` dos dois locks.
+- `next` 16.4.2 → 16.4.5 (release de segurança de 03/11). `filelock` 4.2.4,
+  `ast-serialize` 0.13.1 e `ruff` 0.17.3 no lock de desenvolvimento, editados com os
+  valores dos PRs do Dependabot; `actions/setup-python` 7.1.0. Runtime Python inalterado.
+- Falha aberta: o job `security` falha em `npm audit --audit-level=moderate` por
+  GHSA-g3hv-75wg-m249 (`minimatch` < 11.0.1, só em desenvolvimento). Sem correção sem
+  major; critério não foi afrouxado. Ver `docs/EVOLUTION.md`, B14.
+- Comandos: `npm ci`, `pip install -r apps/api/requirements.lock.txt`, `npm run lint`,
+  `npm run format:check`, `npm run typecheck`, `npm run test:web`, `npm run build`,
+  `npm audit`, `python scripts/verify/export_contract.py --check`,
+  `python scripts/verify/linux_checks.py`.
+
+Não verificado nesta sessão: E2E local, Docker Compose e `check.ps1` no Windows. O E2E
+passou no CI; a revalidação de locks no Windows e no Docker fica pendente.
